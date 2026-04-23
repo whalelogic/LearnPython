@@ -1,0 +1,11 @@
+[project]
+name = "learnpython"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "google-genai>=1.73.1",
+    "pbd>=0.9",
+    "requests>=2.33.1",
+]
