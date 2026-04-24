@@ -1,17 +1,6 @@
----
-title: Flask REST API Setup: A Step-by-Step Tutorial
-author: Keith Thomson
-description: In this tutorial, we'll walk through setting up a basic Flask REST API. We'll cover the essential steps, from installing dependencies to creating routes for CRUD operations.
-tags: [python, flask, rest-api, tutorial, crud]
----
+## Introduction
 
----
-
-## 📋 Introduction
-
-In this tutorial, we'll walk through setting up a **basic Flask REST API**. We'll cover the essential steps, from installing dependencies to creating routes for **CRUD operations**.
-
----
+#### Setting up a **basic Flask REST API**.
 
 ## 🛠️ Step 1: Install Dependencies
 
