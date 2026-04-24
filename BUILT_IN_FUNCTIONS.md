@@ -1,6 +1,3 @@
-# CSC-212 Data Structures
-<em>files, programs & resources</em>
-
 # Python Built-in Functions
 
 | Function | Description |

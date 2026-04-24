@@ -1,9 +1,8 @@
-Summary 
-Lists
+## Linked Lists Methods
 
-    Ordered, mutable, allows duplicates.
-    Use .append(), .remove(), .sort(), .pop(), etc.
-    Iterate with for loops.
+- Ordered, mutable, allows duplicates.
+- Use `.append()`, `.remove()`, `.sort()`, `.pop()`, etc.
+- Iterate with `for` loops.
 
 
 | Method            | Description                                    | Example                   |
@@ -19,7 +18,6 @@ Lists
 | `reverse()`      | Reverses the list (in-place) | `numbers.reverse()` |
 | `copy()`         | Returns a shallow copy of the list | `new_list = numbers.copy()` |
 | `clear()`        | Removes all elements from the list | `numbers.clear()` |
-
 
 
 
