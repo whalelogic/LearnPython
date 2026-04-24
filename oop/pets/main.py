@@ -1,22 +1,3 @@
-# main.py
-
-"""
-Description: Project 3 Classes and Objects -     
-
-    This project demonstrates the use of classes and objects in Python. 
-    It involves the creation of a `Pet` class and utilizes various 
-    object-oriented programming techniques to read pet data from a file,
-    organize it into objects, and process it to display information 
-    about pets and their owners based on specific criteria.
-
-Author: Keith Thomson
-
-Files: pet.py (class def) main.py (program) pet_data.txt (data) main.html (pydoc)
-
-"""
-
-
-
 from pet import Pet
 
 def read_pet_data(file_path):
@@ -85,7 +66,7 @@ if __name__ == "__main__":
     It then outputs snake_owners insect_owners and dog_owners. It creates a dictionary with owners: dogs. 
     """
 
-    file_path = '/home/whaler/data_structures/project_3/pet_data.txt'
+    file_path = 'pet_data.txt'
     pets = read_pet_data(file_path)
 
     print("All Pets:")
