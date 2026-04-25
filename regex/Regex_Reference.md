@@ -1,10 +1,3 @@
----
-title: Mastering Regular Expressions: A Comprehensive Guide
-author: Keith Thomson
-description: Regular expressions (regex) are a powerful tool for pattern matching and text manipulation. They allow you to search, extract, and replace specific patterns within strings, making them invaluable for tasks like data validation, parsing, text mining, log analysis, and search-and-replace operations.
-tags: [python, regex, regular-expressions, programming, guide]
----
-
 ## 📌 Introduction
 
 Regular expressions (regex) are a **🔥 powerful tool** for **pattern matching** and **text manipulation**. They allow you to **🔍 search, 📝 extract, and 🔄 replace** specific patterns within strings, making them invaluable for tasks like:
@@ -16,28 +9,14 @@ Regular expressions (regex) are a **🔥 powerful tool** for **pattern matching*
 
 This guide will introduce you to the **fundamental concepts, syntax, and real-world applications** of regular expressions.
 
----
-
-## 📋 Table of Contents
-1. [Basic Syntax](#basic-syntax)
-2. [Special Characters](#special-characters)
-3. [Grouping and Capturing](#grouping-and-capturing)
-4. [Lookaheads and Lookbehinds](#lookaheads-and-lookbehinds)
-5. [Common Use Cases](#common-use-cases)
-6. [Regex in Python](#regex-in-python)
-7. [Performance Considerations](#performance-considerations)
-8. [Practical Examples](#practical-examples)
-9. [Debugging and Testing](#debugging-and-testing)
-10. [Conclusion](#conclusion)
-
----
-
 ## 📖 Basic Syntax 
 
 ### 🔤 Literal Characters
 Match **exact characters**. For example, the regex `hello` will match the string `"hello"`.
 
+--- 
 ### 🅰️ Character Classes
+
 Match **sets of characters**:
    Syntax       | Description                                      | Example                     | 
  |--------------|--------------------------------------------------|-----------------------------| 
@@ -45,7 +24,7 @@ Match **sets of characters**:
  | `[A-Z]`      | Matches any uppercase letter.                    | `A`, `B`, `Z`               | 
  | `[0-9]`      | Matches any digit.                               | `0`, `1`, `9`               | 
  | `[a-zA-Z0-9]`| Matches any alphanumeric character.              | `a`, `B`, `1`               | 
- | `[^a-z]`     | Matches any character **except** lowercase letters. | `A`, `1`, `@`           | 
+ | `[^a-z]`     | Matches any character **except** lowercase letters. | `A`, `1`, `@`            | 
 
 ---
 
