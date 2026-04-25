@@ -1,13 +1,16 @@
 [project]
-name = "python-learn"
+name = "LearnPython"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python tutorial with comprehensive guides. "
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "fastapi>=0.136.1",
+    "pydantic>=2.13.3",
+]
 
 [tool.uv.workspace]
 members = [
-    "web/fast-api",
-    "web/CountryAPI",
+    "web/CountryAPI",  # FastAPI full API example
+    "web/quick-demo",  # FastAPI quick demo
 ]

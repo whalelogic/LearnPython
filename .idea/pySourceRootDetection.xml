@@ -4,6 +4,7 @@
     <option name="sourcePathsSet">
       <set>
         <option value="$PROJECT_DIR$/web/gen" />
+        <option value="$PROJECT_DIR$/web/CountryAPI/gen" />
       </set>
     </option>
   </component>
