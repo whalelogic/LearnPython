@@ -1,250 +1,267 @@
 # Context Managers in Python
 
-Context managers allow you to allocate and release resources precisely
-when you want to. The most common use is with the `with` statement.
+Context managers provide deterministic setup/teardown around a block of code. They are used with `with` (and `async with`) to manage resources safely and cleanly.
 
-## The with Statement
+## Mental Model
 
-Automatically handle resource cleanup:
+A context manager is a **scope guard**:
+
+1. Enter scope (`__enter__` / `__aenter__`)
+2. Run block
+3. Exit scope (`__exit__` / `__aexit__`) even if errors occur
+
+This makes context managers ideal for files, locks, network connections, transactions, and temporary state changes.
+
+## Why `with` Matters
+
+| Without `with` | With `with` |
+|---|---|
+| Manual cleanup in `finally` | Automatic cleanup |
+| Easy to forget resource release | Safe by default |
+| More boilerplate | Readable and compact |
+
+## Basic `with` Example
 
 ```python
-# Without context manager
-file = open('example.txt', 'r')
+with open("example.txt", "r", encoding="utf-8") as file:
+    content = file.read()
+    print(content)
+# file closed automatically
+```
+
+Equivalent manual pattern:
+
+```python
+file = open("example.txt", "r", encoding="utf-8")
 try:
     content = file.read()
-    print(content)
 finally:
     file.close()
-
-# With context manager
-with open('example.txt', 'r') as file:
-    content = file.read()
-    print(content)
-# File is automatically closed
 ```
 
-## Creating Context Managers with Classes
-
-Implement `__enter__` and `__exit__` methods:
+## Implementing Class-based Context Managers
 
 ```python
-class DatabaseConnection:
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.connection = None
-    
+class Timer:
     def __enter__(self):
-        print(f"Connecting to {self.host}:{self.port}")
-        self.connection = self._create_connection()
-        return self.connection
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        print("Closing connection")
-        if self.connection:
-            self.connection.close()
-        
-        # Return False to propagate exceptions
-        # Return True to suppress exceptions
-        return False
-    
-    def _create_connection(self):
-        # Simulate connection creation
-        return {"status": "connected"}
+        import time
+        self._time = time
+        self.start = time.perf_counter()
+        return self
 
-# Usage
-with DatabaseConnection('localhost', 5432) as conn:
-    print(f"Connection status: {conn['status']}")
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        end = self._time.perf_counter()
+        self.elapsed = end - self.start
+        print(f"Elapsed: {self.elapsed:.6f}s")
+        return False  # do not suppress exceptions
+
+with Timer() as t:
+    total = sum(range(100_000))
 ```
 
-## Using contextlib
+## `__exit__` Return Value and Exception Suppression
 
-Create context managers with the contextlib module:
+| Return from `__exit__` | Behavior |
+|---|---|
+| `False` / `None` | Exception propagates |
+| `True` | Exception suppressed |
+
+Use suppression sparingly and only when intentionally converting failure into alternate control flow.
+
+## Function-based Context Managers (`contextlib.contextmanager`)
 
 ```python
 from contextlib import contextmanager
 
 @contextmanager
-def file_manager(filename, mode):
-    print(f"Opening {filename}")
-    file = open(filename, mode)
-    try:
-        yield file
-    finally:
-        print(f"Closing {filename}")
-        file.close()
-
-# Usage
-with file_manager('test.txt', 'w') as f:
-    f.write('Hello, World!')
-
-# Timer context manager
-import time
-
-@contextmanager
-def timer(label):
-    start = time.time()
+def temporary_env(key, value):
+    import os
+    old = os.environ.get(key)
+    os.environ[key] = value
     try:
         yield
     finally:
-        end = time.time()
-        print(f"{label}: {end - start:.2f} seconds")
+        if old is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = old
 
-with timer("Download"):
-    # Simulate work
-    time.sleep(2)
+with temporary_env("APP_MODE", "debug"):
+    pass
 ```
+
+This style is concise and ideal for simple setup/cleanup logic.
 
 ## Multiple Context Managers
 
-Handle multiple resources in one statement:
+```python
+with open("input.txt", "r", encoding="utf-8") as src, \
+     open("output.txt", "w", encoding="utf-8") as dst:
+    dst.write(src.read())
+```
+
+All entered managers are unwound in reverse order on exit.
+
+## Dynamic Resource Management with `ExitStack`
 
 ```python
-# Multiple with statements (old way)
-with open('input.txt', 'r') as infile:
-    with open('output.txt', 'w') as outfile:
-        outfile.write(infile.read())
-
-# Multiple managers in one statement (Python 3+)
-with open('input.txt', 'r') as infile, \
-     open('output.txt', 'w') as outfile:
-    outfile.write(infile.read())
-
-# Using contextlib.ExitStack
 from contextlib import ExitStack
 
-def process_files(filenames):
-    with ExitStack() as stack:
-        files = [stack.enter_context(open(fname)) for fname in filenames]
-        # All files are automatically closed when exiting
-        for f in files:
-            print(f.read())
+filenames = ["a.txt", "b.txt", "c.txt"]
+
+with ExitStack() as stack:
+    files = [stack.enter_context(open(name, "r", encoding="utf-8")) for name in filenames]
+    for f in files:
+        print(f.readline().strip())
 ```
 
-## Exception Handling
-
-Context managers can handle exceptions:
-
-```python
-class ErrorHandler:
-    def __enter__(self):
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            print("No errors occurred")
-            return False
-        
-        if exc_type == ValueError:
-            print(f"Handled ValueError: {exc_val}")
-            return True  # Suppress the exception
-        
-        # Let other exceptions propagate
-        return False
-
-# Usage
-with ErrorHandler():
-    raise ValueError("This will be suppressed")
-    print("This won't print")
-
-print("Execution continues")
-```
+`ExitStack` is useful when you don't know resource count at coding time.
 
 ## Async Context Managers
 
-Context managers for async code:
-
 ```python
-class AsyncDatabaseConnection:
+class AsyncConnection:
     async def __aenter__(self):
-        print("Connecting asynchronously")
-        # await actual connection
+        print("opening async connection")
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        print("Disconnecting asynchronously")
-        # await actual disconnection
+        print("closing async connection")
         return False
 
-# Usage with async/await
-async def main():
-    async with AsyncDatabaseConnection() as conn:
-        # Do async work
+async def use_conn():
+    async with AsyncConnection() as conn:
         pass
+```
 
-# Using contextlib for async
+For function-based async managers:
+
+```python
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def async_timer(label):
     import asyncio
-    start = asyncio.get_event_loop().time()
+    start = asyncio.get_running_loop().time()
     try:
         yield
     finally:
-        end = asyncio.get_event_loop().time()
-        print(f"{label}: {end - start:.2f} seconds")
-
-async def example():
-    async with async_timer("Operation"):
-        await asyncio.sleep(1)
+        end = asyncio.get_running_loop().time()
+        print(f"{label}: {end - start:.3f}s")
 ```
 
-## Common Use Cases
+## Standard Library Context Managers You Should Know
 
-Practical applications of context managers:
+| Tool | Module | Use case |
+|---|---|---|
+| `open(...)` | built-in | File handling |
+| `threading.Lock()` | `threading` | Protect critical sections |
+| `contextlib.suppress(...)` | `contextlib` | Ignore specific expected exceptions |
+| `contextlib.redirect_stdout(...)` | `contextlib` | Capture or redirect printed output |
+| `tempfile.TemporaryDirectory()` | `tempfile` | Auto-clean temporary directories |
+| `decimal.localcontext()` | `decimal` | Temporary decimal precision/rounding |
+
+## `contextlib` Utilities in Practice
+
+### Suppress expected error
 
 ```python
-# 1. Lock management
-from threading import Lock
+from contextlib import suppress
 
-lock = Lock()
-with lock:
-    # Critical section
-    pass
+with suppress(FileNotFoundError):
+    import os
+    os.remove("optional-cache.tmp")
+```
 
-# 2. Directory changes
-import os
+### Redirect stdout
+
+```python
+from contextlib import redirect_stdout
+from io import StringIO
+
+buffer = StringIO()
+with redirect_stdout(buffer):
+    print("captured text")
+
+print(buffer.getvalue())
+```
+
+## Transaction-like Pattern
+
+```python
 from contextlib import contextmanager
 
 @contextmanager
-def change_dir(path):
-    old_dir = os.getcwd()
+def transaction(conn):
+    conn.begin()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+```
+
+This pattern centralizes success/rollback behavior and reduces duplicated error handling.
+
+## Testing with Context Managers
+
+Use context managers in tests for deterministic setup and teardown:
+
+```python
+from tempfile import TemporaryDirectory
+from pathlib import Path
+
+with TemporaryDirectory() as tmp:
+    path = Path(tmp) / "data.txt"
+    path.write_text("hello", encoding="utf-8")
+    assert path.read_text(encoding="utf-8") == "hello"
+```
+
+## Common Mistakes
+
+| Mistake | Problem | Better practice |
+|---|---|---|
+| Doing heavy logic in `__enter__` with no failure plan | Partial setup risk | Keep setup atomic or roll back safely |
+| Returning `True` from `__exit__` indiscriminately | Hides real bugs | Suppress only specific expected exceptions |
+| Forgetting to yield in `@contextmanager` function | Runtime error | Ensure exactly one `yield` |
+| Using context manager where plain function is enough | Overengineering | Use `with` only for scoped resources/state |
+
+## Building Intuition: When to Reach for a Context Manager
+
+Use a context manager when you see this sentence:
+
+> "I must always undo/release/reset this thing, even if an exception occurs."
+
+Typical examples:
+- file handles
+- locks
+- DB transactions
+- temporary env vars
+- temporary cwd changes
+
+## Advanced Example: Temporary Working Directory
+
+```python
+from contextlib import contextmanager
+from pathlib import Path
+import os
+
+@contextmanager
+def working_directory(path):
+    previous = Path.cwd()
     os.chdir(path)
     try:
-        yield
+        yield Path(path)
     finally:
-        os.chdir(old_dir)
-
-with change_dir('/tmp'):
-    # Work in /tmp
-    pass
-# Back to original directory
-
-# 3. Temporary environment variables
-@contextmanager
-def temp_env_var(key, value):
-    old_value = os.environ.get(key)
-    os.environ[key] = value
-    try:
-        yield
-    finally:
-        if old_value is None:
-            del os.environ[key]
-        else:
-            os.environ[key] = old_value
-
-# 4. Database transactions
-@contextmanager
-def transaction(connection):
-    connection.begin()
-    try:
-        yield connection
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
-
-with transaction(db_connection) as conn:
-    conn.execute("INSERT INTO ...")
+        os.chdir(previous)
 ```
+
+## Practice Goals
+
+- Implement one class-based and one function-based context manager.
+- Explain exactly when `__exit__` runs.
+- Use `ExitStack` for dynamic resources.
+- Use `async with` in coroutine workflows.
+
+Context managers are one of Python's highest-leverage features for writing safe, clean, and maintainable code.
