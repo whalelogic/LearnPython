@@ -39,10 +39,7 @@ with open("report.json", "w", encoding="utf-8") as file:
 from pathlib import Path
 
 path = Path("todos.txt")
-path.write_text("read
-practice
-review
-", encoding="utf-8")
+path.write_text("read\npractice\nreview\n", encoding="utf-8")
 items = path.read_text(encoding="utf-8").splitlines()
 print(items)
 ```
