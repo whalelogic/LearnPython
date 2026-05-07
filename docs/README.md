@@ -1,5 +1,7 @@
 # Documentation Hub
 
+> Authoring standard: Use `/regex/README.md` as the example template for all future reference and guide generation.
+
 ## References
 
 ### Core Python
@@ -31,4 +33,3 @@
 - [TensorFlow Guide](guides/machine-learning/TENSORFLOW_GUIDE.md)
 - [Keras Guide](guides/machine-learning/KERAS_GUIDE.md)
 - [PyTorch Guide](guides/machine-learning/PYTORCH_GUIDE.md)
-
