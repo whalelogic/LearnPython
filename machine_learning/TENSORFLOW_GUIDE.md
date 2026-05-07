@@ -48,154 +48,143 @@ TensorFlow is a good choice when you want a mature ecosystem, deployment tooling
 
 ---
 
-## Extended Study Workbook
+## TensorFlow Deep-Dive Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Tensor shapes and dtypes
 
-### 1) Learning Goals
+Always check both shape and dtype before debugging math issues.
 
-By the end of this topic, you should be able to:
+```python
+import tensorflow as tf
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+x = tf.constant([[1, 2], [3, 4]], dtype=tf.float32)
+print(x.shape)   # (2, 2)
+print(x.dtype)   # float32
+```
 
-### 2) Mental Model
+Common pitfalls:
 
-Use this short mental model while reading examples:
+- mixing `float32` and `float64`
+- forgetting batch dimension
+- incorrect rank after reshape/squeeze
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+### Eager mode vs graph execution
 
-If you cannot explain all five parts, pause and simplify the example.
+- Eager mode: immediate execution, easier debugging.
+- `@tf.function`: traces Python into optimized graph functions.
 
-### 3) Terminology Drill
+Use eager for development clarity; add graph tracing when performance matters.
 
-Review these terms and define each in your own words:
+```python
+@tf.function
+def step(x):
+    return x * 2
+```
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+### `tf.data` pipeline basics
 
-A useful habit is to write one sentence per term plus one concrete example.
+```python
+import tensorflow as tf
 
-### 4) Practical Checklist
+features = tf.constant([[1.0], [2.0], [3.0], [4.0]])
+labels = tf.constant([[2.0], [4.0], [6.0], [8.0]])
 
-When implementing this topic in a project, verify:
+dataset = tf.data.Dataset.from_tensor_slices((features, labels))
+dataset = dataset.shuffle(4).batch(2).prefetch(tf.data.AUTOTUNE)
+```
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+Pipeline checklist:
 
-### 5) Common Mistakes and Corrections
+- shuffle training data
+- batch consistently
+- prefetch for throughput
+- cache if dataset fits memory
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+### Compile / fit / evaluate flow
 
-### 6) Debugging Workflow
+```python
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(1,)),
+    tf.keras.layers.Dense(8, activation="relu"),
+    tf.keras.layers.Dense(1),
+])
 
-Follow this process when something breaks:
+model.compile(optimizer="adam", loss="mse", metrics=["mae"])
+history = model.fit(dataset, epochs=5, verbose=0)
+metrics = model.evaluate(dataset, verbose=0)
+print(metrics)
+```
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+### Overfitting controls
 
-### 7) Mini Exercises
+Use these tools early:
 
-Try these short tasks:
+- validation split/dataset
+- dropout layers
+- L2 regularization
+- early stopping callback
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+```python
+callbacks = [
+    tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+]
+```
 
-### 8) Integration Notes
+### Saving and loading models
 
-This topic is strongest when combined with:
+```python
+model.save("model.keras")
+loaded = tf.keras.models.load_model("model.keras")
+```
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+Save format guidance:
 
-### 9) Review Questions
+- use `.keras` for native Keras model format
+- version model artifacts with metadata
+- keep preprocessing steps documented
 
-Use these to self-check understanding:
+### Inference checklist
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+Before deploying inference code, verify:
 
-### 10) Progress Rubric
+- input schema matches training schema
+- normalization is identical to training
+- output decoding is documented
+- latency is measured on realistic input sizes
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+### Debugging workflow for TensorFlow
 
-### 11) Suggested Practice Routine
+1. Print sample batch shapes.
+2. Confirm loss decreases across epochs.
+3. Check for NaNs in inputs/gradients.
+4. Reduce model size to isolate instability.
+5. Compare against a tiny synthetic dataset.
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+### TensorFlow + ecosystem notes
 
-### 12) Reference Hygiene
+- Keras gives concise model APIs.
+- NumPy interop is straightforward.
+- TensorBoard helps track training metrics.
+- SavedModel / `.keras` formats support serving workflows.
 
-To keep this document useful over time:
+### Practice tasks
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+1. Train a tiny regression model on synthetic data.
+2. Add validation metrics and early stopping.
+3. Add model save/load round trip test.
+4. Replace in-memory arrays with `tf.data` pipeline.
+5. Compare two optimizers and record results.
 
+### Self-check questions
+
+- Can you explain each tensor shape in your pipeline?
+- Do you know why chosen loss/metric fits the task?
+- Is preprocessing consistent between train and inference?
+- Can you recover cleanly from training instability?
+- Is your model artifact reproducible?
+
+### Related Reading
+
+- [KERAS_GUIDE.md](KERAS_GUIDE.md)
+- [PYTORCH_GUIDE.md](PYTORCH_GUIDE.md)
+- [../data/NUMPY_GUIDE.md](../data/NUMPY_GUIDE.md)
