@@ -257,3 +257,132 @@ def validate_user_input(data):
 - Avoid broad catches unless at top-level boundaries.
 
 Good exception handling turns failures into actionable signals rather than hidden bugs.
+
+## Extended Error-handling Scenarios
+
+## Retrying transient failures
+
+```python
+import time
+
+def retry(operation, attempts=3, delay=0.2):
+    last_error = None
+    for _ in range(attempts):
+        try:
+            return operation()
+        except ConnectionError as exc:
+            last_error = exc
+            time.sleep(delay)
+    raise RuntimeError("Operation failed after retries") from last_error
+```
+
+## Converting low-level errors to domain errors
+
+```python
+class PaymentError(Exception):
+    pass
+
+
+def charge(card, amount):
+    try:
+        return gateway_charge(card, amount)
+    except TimeoutError as exc:
+        raise PaymentError("Payment gateway timeout") from exc
+```
+
+## Bulk processing with summarized failures
+
+```python
+def import_rows(rows):
+    ok, bad = [], []
+    for i, row in enumerate(rows, start=1):
+        try:
+            ok.append(transform(row))
+        except Exception as exc:
+            bad.append({"line": i, "row": row, "error": str(exc)})
+    return ok, bad
+```
+
+## Exception Handling Checklist
+
+- Catch only what you can handle.
+- Preserve causality with `raise ... from ...`.
+- Keep error messages actionable and contextual.
+- Avoid leaking sensitive data in exception text.
+- Log at boundaries, not every low-level function.
+
+Exception quality directly affects debuggability, observability, and system resilience.
+
+## Failure Taxonomy Mental Model
+
+| Failure type | Example | Handling style |
+|---|---|---|
+| User input error | Invalid form field | Validate and return clear message |
+| External dependency transient error | Network timeout | Retry with backoff |
+| External dependency permanent error | 401 unauthorized | Surface auth-specific guidance |
+| Programmer bug | Attribute typo | Let crash in development and fix root cause |
+
+## Top-level Boundary Handler Pattern
+
+```python
+def run_app():
+    try:
+        main()
+    except ValidationError as exc:
+        print(f"Input error: {exc}")
+    except Exception as exc:
+        print("Unexpected failure")
+        raise
+```
+
+Boundary handlers convert exceptions to UX-friendly outputs while preserving debuggability.
+
+## Cleanup Guarantees Reminder
+
+When resources are involved:
+- Use context managers first.
+- Use `finally` if context manager is not available.
+- Ensure cleanup logic itself is safe and idempotent.
+
+Reliable exception design is as important as happy-path logic for production software.
+
+## Exception Message Quality Guidelines
+
+High-quality exception messages should answer:
+
+1. What failed?
+2. Which input/context caused it?
+3. What should happen next?
+
+```python
+def parse_age(text):
+    try:
+        age = int(text)
+    except ValueError as exc:
+        raise ValueError(f"Age must be an integer, got {text!r}") from exc
+
+    if age < 0:
+        raise ValueError(f"Age must be >= 0, got {age}")
+    return age
+```
+
+## Mapping Exceptions to User-facing Outcomes
+
+| Internal exception | User-facing output |
+|---|---|
+| `ValidationError` | "Please correct the highlighted fields." |
+| `AuthenticationError` | "Sign in required." |
+| `PermissionError` | "You do not have access." |
+| Unexpected `Exception` | "Something went wrong. Try again later." |
+
+This pattern keeps internals precise while keeping UX clear and safe.
+
+## Recoverable vs Non-recoverable Decision
+
+| Question | If yes | If no |
+|---|---|---|
+| Can caller continue safely? | Handle and continue | Re-raise |
+| Is fallback behavior well-defined? | Use fallback path | Fail fast |
+| Is this programming bug? | Usually do not catch broadly | Catch only at app boundary |
+
+Robust exception strategy is fundamentally about making failure semantics explicit.

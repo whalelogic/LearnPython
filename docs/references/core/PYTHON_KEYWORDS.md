@@ -246,3 +246,130 @@ async def main():
 - Write `try/except/else/finally` for a file parse workflow.
 
 Keywords define Python's grammar; mastering them makes code more readable, maintainable, and idiomatic.
+
+## Keyword Interactions and Patterns
+
+## Loop `else` with `for`/`while`
+
+Python loops support an `else` clause that runs only if loop did **not** exit via `break`.
+
+```python
+def contains_prime(nums):
+    for n in nums:
+        if n > 1 and all(n % d for d in range(2, int(n**0.5) + 1)):
+            break
+    else:
+        return False
+    return True
+```
+
+## `try` + `else` for clarity
+
+```python
+def read_int(text):
+    try:
+        value = int(text)
+    except ValueError:
+        return None
+    else:
+        return value
+```
+
+Use `else` to separate success path from exception handling path.
+
+## `with` + `as`
+
+```python
+with open("data.txt", "r", encoding="utf-8") as f:
+    first_line = f.readline()
+```
+
+`as` binds context-managed value cleanly.
+
+## `from ... import ... as ...`
+
+```python
+from collections import defaultdict as dd
+counts = dd(int)
+```
+
+## Pattern Matching Features with `match/case`
+
+```python
+def classify(obj):
+    match obj:
+        case {"type": "point", "x": x, "y": y}:
+            return f"Point({x}, {y})"
+        case [first, *rest]:
+            return f"List start={first}, rest={rest}"
+        case _:
+            return "Unknown"
+```
+
+## Scope Strategy Summary
+
+| Keyword | Scope it affects | Typical use |
+|---|---|---|
+| `global` | Module scope | Mutating module-level state |
+| `nonlocal` | Enclosing function scope | Closures with state |
+
+## Reserved Words Checklist
+
+Before naming variables/functions/classes, avoid keyword collisions (`class`, `def`, `return`, etc.).
+Use suffix alternatives:
+- `class_`
+- `from_`
+- `lambda_fn`
+
+## Keyword Fluency Drill
+
+- Convert a procedural script into functions with `def`, `return`, and explicit `raise`.
+- Replace a long `if/elif` chain with `match/case`.
+- Add `try/except/else/finally` around parsing I/O boundary.
+- Refactor mutable closure state using `nonlocal`.
+
+Keywords are small but compositional; mastery comes from understanding how they interact inside complete program flows.
+
+## Keyword-by-Keyword Micro-examples
+
+```python
+# assert
+value = 10
+assert value > 0
+
+# del
+items = [1, 2, 3]
+del items[0]
+
+# lambda
+double = lambda x: x * 2
+
+# raise
+if value < 0:
+    raise ValueError("negative")
+```
+
+## Decision Cheatsheet
+
+| You need to... | Keyword(s) |
+|---|---|
+| Branch by condition | `if` / `elif` / `else` |
+| Loop while condition true | `while` |
+| Iterate over collection | `for` / `in` |
+| Exit current loop | `break` |
+| Skip current iteration | `continue` |
+| Define reusable behavior | `def` / `return` |
+| Produce lazy stream | `yield` |
+| Handle failures | `try` / `except` / `finally` / `raise` |
+| Manage resource scope | `with` / `as` |
+| Do async operations | `async` / `await` |
+
+## From Beginner to Advanced Keyword Mastery
+
+1. Learn control flow and function keywords first.
+2. Add exception and resource management keywords.
+3. Add scope (`global`, `nonlocal`) and import organization.
+4. Add pattern matching (`match`, `case`) for structured branching.
+5. Practice combining keywords in realistic workflows.
+
+Keywords are most powerful when used as composable grammar pieces rather than isolated syntax facts.

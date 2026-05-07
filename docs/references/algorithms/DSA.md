@@ -378,3 +378,173 @@ def fib_tab(n):
 5. Apply these patterns to real project code, not only exercises.
 
 Data structures and algorithms are not separate from Python—they are the reason Python code can be both expressive and performant when used thoughtfully.
+
+## Extended Complexity Table by Pattern
+
+| Pattern | Typical complexity | Notes |
+|---|---|---|
+| One pass scan | O(n) | Counting, filtering |
+| Nested full scan | O(n^2) | Pair comparisons |
+| Sort then linear pass | O(n log n) | Common optimization |
+| Heap top-k | O(n log k) | Efficient when `k << n` |
+| Hash lookup per item | O(n) avg | Great for duplicate detection |
+
+## Top-K Example with Heap
+
+```python
+import heapq
+
+def top_k(nums, k):
+    return heapq.nlargest(k, nums)
+```
+
+## Prefix Sum Pattern
+
+```python
+def prefix_sums(nums):
+    out = [0]
+    for n in nums:
+        out.append(out[-1] + n)
+    return out
+
+# Sum in range [l, r] => pref[r+1] - pref[l]
+```
+
+## Monotonic Stack Idea
+
+Useful for next greater/smaller element problems.
+
+```python
+def next_greater(nums):
+    res = [-1] * len(nums)
+    stack = []
+    for i, n in enumerate(nums):
+        while stack and nums[stack[-1]] < n:
+            idx = stack.pop()
+            res[idx] = n
+        stack.append(i)
+    return res
+```
+
+## Algorithm Selection Heuristics
+
+- Need unique detection quickly → `set`.
+- Need frequency counts → `dict` / `Counter`.
+- Need shortest path with non-negative weights → Dijkstra + heap.
+- Need hierarchical traversal → recursion or explicit stack/queue.
+- Need repeated median/top values → heaps.
+
+## Edge-case Checklist for Implementations
+
+- Empty input
+- One element
+- Duplicate values
+- Negative numbers / zero
+- Already sorted / reverse sorted data
+- Very large input (memory pressure)
+
+Good algorithm practice is mostly good trade-off reasoning backed by clear complexity awareness.
+
+## Graph Algorithm Mental Models
+
+## Dijkstra (non-negative edge weights)
+
+```python
+import heapq
+
+def dijkstra(graph, start):
+    # graph: {node: [(neighbor, weight), ...]}
+    dist = {node: float("inf") for node in graph}
+    dist[start] = 0
+    heap = [(0, start)]
+
+    while heap:
+        cur_dist, node = heapq.heappop(heap)
+        if cur_dist != dist[node]:
+            continue
+        for nbr, w in graph[node]:
+            cand = cur_dist + w
+            if cand < dist[nbr]:
+                dist[nbr] = cand
+                heapq.heappush(heap, (cand, nbr))
+    return dist
+```
+
+## Topological sort (DAG)
+
+```python
+from collections import deque
+
+def topo_sort(graph):
+    indeg = {u: 0 for u in graph}
+    for u in graph:
+        for v in graph[u]:
+            indeg[v] += 1
+
+    q = deque([u for u, d in indeg.items() if d == 0])
+    out = []
+
+    while q:
+        u = q.popleft()
+        out.append(u)
+        for v in graph[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    if len(out) != len(graph):
+        raise ValueError("Cycle detected")
+    return out
+```
+
+## Union-Find (Disjoint Set)
+
+```python
+class DSU:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return False
+        if self.rank[ra] < self.rank[rb]:
+            ra, rb = rb, ra
+        self.parent[rb] = ra
+        if self.rank[ra] == self.rank[rb]:
+            self.rank[ra] += 1
+        return True
+```
+
+## Data Structure Selection by Operation Mix
+
+| Workload | Best fit |
+|---|---|
+| Frequent append + random reads | `list` |
+| Frequent push/pop both ends | `deque` |
+| Repeated key lookups | `dict` |
+| Frequent uniqueness checks | `set` |
+| Keep smallest/largest efficiently | `heapq` |
+
+## Testing Algorithms Correctly
+
+- test normal case,
+- edge case (empty/single),
+- duplicate-heavy case,
+- randomized input,
+- adversarial case for worst complexity.
+
+## Practical Performance Advice
+
+- Prefer built-ins and stdlib algorithms first.
+- Measure with representative data before optimizing.
+- Reduce algorithmic complexity before micro-optimizing loops.
+- Keep correctness and readability unless performance constraints require trade-offs.
+
+Algorithms become practical when paired with clear constraints, measured behavior, and thoughtful data-structure choices.

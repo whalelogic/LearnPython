@@ -227,3 +227,167 @@ print(merged_config(base, env, cli))
 - Choose key types correctly and safely.
 
 Dictionaries are central to Python fluency. Once mastered, they unlock cleaner code for APIs, data processing, and application architecture.
+
+## Advanced Dictionary Patterns
+
+## Nested dictionary updates safely
+
+```python
+def deep_set(d, path, value):
+    cur = d
+    for key in path[:-1]:
+        cur = cur.setdefault(key, {})
+    cur[path[-1]] = value
+
+cfg = {}
+deep_set(cfg, ["db", "primary", "host"], "localhost")
+print(cfg)
+```
+
+## Accumulating lists by key
+
+```python
+events = [
+    ("auth", "login"),
+    ("auth", "logout"),
+    ("billing", "invoice"),
+]
+
+by_domain = {}
+for domain, action in events:
+    by_domain.setdefault(domain, []).append(action)
+```
+
+## Counting frequencies idiomatically
+
+```python
+text = "to be or not to be"
+freq = {}
+for token in text.split():
+    freq[token] = freq.get(token, 0) + 1
+```
+
+## Merging and conflict strategy
+
+```python
+defaults = {"retries": 3, "timeout": 30, "region": "us"}
+team = {"timeout": 45, "region": "eu"}
+user = {"timeout": 10}
+
+# precedence: defaults < team < user
+effective = defaults | team | user
+```
+
+## Transforming dictionaries
+
+```python
+prices = {"apple": 1.2, "banana": 0.8, "pear": 1.5}
+with_tax = {k: round(v * 1.07, 2) for k, v in prices.items()}
+expensive = {k: v for k, v in prices.items() if v >= 1.0}
+```
+
+## Reverse index construction
+
+```python
+docs = {
+    "doc1": ["python", "regex"],
+    "doc2": ["python", "api"],
+}
+
+index = {}
+for doc, tags in docs.items():
+    for tag in tags:
+        index.setdefault(tag, set()).add(doc)
+```
+
+## Default values strategy table
+
+| Need | Pattern |
+|---|---|
+| Read maybe-missing key | `d.get("key")` |
+| Read with fallback | `d.get("key", fallback)` |
+| Create-if-missing mutable value | `d.setdefault("key", [])` |
+| Increment counter | `d[key] = d.get(key, 0) + 1` |
+
+## Mutating during iteration safely
+
+```python
+d = {"a": 1, "b": 0, "c": 2}
+for k, v in list(d.items()):
+    if v == 0:
+        del d[k]
+```
+
+## Serialization-minded dictionaries
+
+When dictionaries become API payloads:
+
+- use stable key names,
+- keep values JSON-serializable,
+- avoid non-string keys if data will be exported.
+
+```python
+payload = {
+    "id": 101,
+    "name": "Ava",
+    "active": True,
+    "roles": ["admin", "editor"],
+}
+```
+
+## Normalizing inbound records
+
+```python
+def normalize_user(raw):
+    return {
+        "id": int(raw.get("id", 0)),
+        "name": raw.get("name", "").strip(),
+        "email": raw.get("email", "").lower(),
+        "active": bool(raw.get("active", False)),
+    }
+```
+
+## Key design guidelines
+
+| Key type | Recommended? | Notes |
+|---|---|---|
+| `str` | Yes | Most interoperable |
+| `int` | Yes | Useful for id-indexed maps |
+| tuple of immutables | Sometimes | Great for composite keys |
+| mutable types (`list`, `dict`) | No | Unhashable / unstable |
+
+## Composite key example
+
+```python
+sales = {}
+for region, product, amount in [
+    ("EU", "A", 10),
+    ("EU", "A", 7),
+    ("US", "B", 5),
+]:
+    key = (region, product)
+    sales[key] = sales.get(key, 0) + amount
+```
+
+## Ordered behavior reminder
+
+Modern Python preserves insertion order:
+
+```python
+d = {}
+d["first"] = 1
+d["second"] = 2
+d["third"] = 3
+print(list(d.keys()))  # ['first', 'second', 'third']
+```
+
+## Dictionary Troubleshooting Checklist
+
+- Unexpected `KeyError`? Use `get` or validate keys earlier.
+- Shared nested mutation? Verify shallow vs deep copy usage.
+- Performance issue? Check repeated scans that should be direct key lookups.
+- Serialization issue? Ensure keys/values are compatible with destination format.
+
+Dictionaries are the backbone of Python data modeling. Deep familiarity with these patterns will improve nearly every program you write.
+
+These references are designed for repeated review and practical daily use.

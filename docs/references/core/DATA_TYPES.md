@@ -282,3 +282,34 @@ print(x is z)  # True (same object)
 - Choose data structures based on complexity and semantics.
 
 Strong data type fluency makes every other Python topic easier: functions, OOP, exceptions, files, and APIs all depend on these fundamentals.
+
+## Type Selection Decision Table
+
+| Situation | Recommended type | Why |
+|---|---|---|
+| Need ordered mutable sequence of events | `list` | Efficient append and indexing |
+| Need immutable coordinate/record | `tuple` | Prevent accidental mutation |
+| Need fast lookup by identifier | `dict` | Average O(1) access |
+| Need membership checks and uniqueness | `set` | Fast membership + deduplication |
+| Need binary network payload | `bytes` | Immutable byte content |
+
+## Type-hint Awareness (Conceptual)
+
+Even though runtime types are dynamic, type hints clarify intent:
+
+```python
+def normalize_tags(tags: list[str]) -> list[str]:
+    return [t.strip().lower() for t in tags if t.strip()]
+```
+
+This improves readability, IDE support, and maintainability without changing runtime behavior.
+
+## Data Type Mastery Recap
+
+A strong Python developer can:
+- predict mutability side effects,
+- choose structures by access pattern,
+- convert data safely at boundaries,
+- and explain identity vs equality clearly.
+
+That foundation makes advanced topics (concurrency, APIs, data science, web backends) much easier to learn and apply.
