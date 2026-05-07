@@ -1,6 +1,6 @@
 # Documentation Hub
 
-> Authoring standard: Use repository-root `/regex/README.md` as the example template for all future reference and guide generation.
+> Authoring standard: Use repository-root [`/regex/README.md`](../regex/README.md) as the example template for all future reference and guide generation.
 
 ## References
 
