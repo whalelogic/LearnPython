@@ -1,72 +1,92 @@
 # Python Data Structures
 
-## Built-in Data Structures
+## Built-in Structures at a Glance
 
-| Data Structure | Mutable? | Ordered? | Duplicates? | Common Methods |
-|---------------|---------|---------|------------|----------------|
-| **List (`list`)** | ✅ Yes | ✅ Yes | ✅ Yes | `.append()`, `.extend()`, `.pop()`, `.sort()`, `.reverse()` |
-| **Tuple (`tuple`)** | ❌ No | ✅ Yes | ✅ Yes | `.count()`, `.index()` |
-| **Set (`set`)** | ✅ Yes | ❌ No | ❌ No | `.add()`, `.remove()`, `.union()`, `.intersection()`, `.difference()` |
-| **Dictionary (`dict`)** | ✅ Yes | ✅ Yes (Python 3.7+) | Keys ❌, Values ✅ | `.keys()`, `.values()`, `.items()`, `.get()`, `.update()`, `.pop()` |
+| Data Structure | Mutable? | Ordered? | Duplicates? | Best for |
+|---|---|---|---|---|
+| `list` | Yes | Yes | Yes | Sequences you append to and iterate over |
+| `tuple` | No | Yes | Yes | Fixed records and function return groups |
+| `set` | Yes | No | No | Membership tests and uniqueness |
+| `dict` | Yes | Yes | Keys: No | Named fields and fast lookups |
 
-## List vs. Tuple vs. Set vs. Dictionary
+## Concrete Examples
 
-| Feature        | List | Tuple | Set | Dictionary |
-|---------------|------|-------|-----|------------|
-| **Indexed?** | ✅ Yes | ✅ Yes | ❌ No | ✅ Keys |
-| **Mutable?** | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
-| **Duplicates Allowed?** | ✅ Yes | ✅ Yes | ❌ No | ✅ Values |
-| **Iteration Speed** | Slower | Faster | Fast | Fast (Key Lookup) |
-| **Use Case** | General-purpose, dynamic array | Immutable sequence | Unique unordered values | Key-value pairs |
+### List
+```python
+queue = ["first", "second"]
+queue.append("third")
+print(queue.pop(0))
+```
 
-## Stack (LIFO - Last In, First Out)
+### Tuple
+```python
+point = (3, 7)
+x, y = point
+print(x, y)
+```
 
-| Feature  | Description |
-|----------|-------------|
-| **Implementation** | Can be implemented using a `list` or `collections.deque` |
-| **Operations** | `.append()` (push), `.pop()` (pop) |
-| **Use Case** | Backtracking (e.g., Browser history, Undo/Redo) |
+### Set
+```python
+tags = {"python", "api", "python", "docs"}
+print(tags)
+print("api" in tags)
+```
 
-## Queue (FIFO - First In, First Out)
+### Dictionary
+```python
+user = {"name": "Ari", "role": "student"}
+user["active"] = True
+print(user["name"])
+```
 
-| Feature  | Description |
-|----------|-------------|
-| **Implementation** | `collections.deque` (recommended) or `queue.Queue` |
-| **Operations** | `.append()` (enqueue), `.popleft()` (dequeue) |
-| **Use Case** | Scheduling tasks, print queue |
+## When to Reach for Other Structures
 
-## Priority Queue (Min/Max Heap)
+### Stack (LIFO)
+Use a `list` or `deque` when the newest item should be removed first.
 
-| Feature  | Description |
-|----------|-------------|
-| **Implementation** | `heapq` module |
-| **Operations** | `heapq.heappush()`, `heapq.heappop()` |
-| **Use Case** | Dijkstra’s algorithm, Task scheduling |
+```python
+stack = []
+stack.append("open menu")
+stack.append("edit item")
+print(stack.pop())
+```
 
-## Linked List
+### Queue (FIFO)
+Use `collections.deque` when the oldest item should leave first.
 
-| Feature  | Description |
-|----------|-------------|
-| **Implementation** | Custom class with `Node` objects |
-| **Operations** | Insert, Delete, Traverse |
-| **Use Case** | Dynamic memory allocation, Efficient insertions/deletions |
+```python
+from collections import deque
 
-## Graphs
+jobs = deque(["email", "report", "backup"])
+print(jobs.popleft())
+```
 
-| Feature  | Description |
-|----------|-------------|
-| **Implementation** | Adjacency list (dict of lists) or adjacency matrix |
-| **Operations** | Add edge, Remove edge, BFS, DFS |
-| **Use Case** | Social networks, Navigation systems |
+### Heap / Priority Queue
+Use `heapq` when the smallest or highest-priority item should come out first.
 
-## Trees
+```python
+import heapq
 
-| Feature  | Description |
-|----------|-------------|
-| **Types** | Binary Tree, Binary Search Tree (BST), AVL Tree, Trie |
-| **Operations** | Insert, Delete, Search, Traverse (Inorder, Preorder, Postorder) |
-| **Use Case** | Hierarchical data, Searching, Auto-complete |
+items = []
+heapq.heappush(items, (2, "normal"))
+heapq.heappush(items, (1, "urgent"))
+print(heapq.heappop(items))
+```
 
----
+## A Useful Comparison Question
 
-This covers the **core data structures** in Python! 🚀 Let me know if you want more details. 😊
+Before choosing a structure, ask yourself:
+
+1. Do I need order?
+2. Do I need uniqueness?
+3. Will I look things up by name?
+4. Will I add and remove items frequently?
+
+Those four questions usually point you to the right default.
+
+## Related Reading
+
+- [README.md](README.md)
+- [lists/README.md](lists/README.md)
+- [dictionaries/README.md](dictionaries/README.md)
+- [algorithms/README.md](algorithms/README.md)

@@ -1,60 +1,83 @@
-# Python Classes & Objects Rules
+# Python Classes and Objects
 
-## Class & Object Basics
+## Core Concepts
 
-| Concept                | Description |
-|------------------------|-------------|
-| **Class**             | A blueprint for creating objects (defines attributes & methods). |
-| **Object**            | An instance of a class with its own unique data. |
-| **Instance Variable** | A variable specific to an object (`self.attribute`). |
-| **Class Variable**    | A shared variable across all instances (`cls.variable`). |
-| **Method**           | A function defined in a class that operates on instances. |
-| **Constructor (`__init__`)** | Initializes object attributes when an instance is created. |
+| Concept | Meaning |
+|---|---|
+| Class | A blueprint describing data and behavior |
+| Object | A specific instance created from a class |
+| Instance attribute | Data stored on one object, like `self.name` |
+| Class attribute | Data shared by every instance |
+| Method | A function defined inside the class |
 
+## Building a Simple Class
 
-## OOP Principles
+```python
+class Dog:
+    species = "Canis familiaris"
 
-| Principle       | Explanation |
-|----------------|-------------|
-| **Encapsulation** | Hiding data inside classes using private variables (`_variable`). |
-| **Inheritance**  | A class can inherit attributes/methods from another class (`class Child(Parent)`). |
-| **Polymorphism** | Methods can have different implementations in different classes. |
-| **Abstraction**  | Hiding implementation details and exposing only necessary parts. |
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
 
-## On using self or cls (instance vs class)
+    def bark(self):
+        return f"{self.name} says woof"
 
-| Feature            | `self` | `cls` |
-|-------------------|--------|--------|
-| Refers to        | The specific instance | The class itself |
-| Used in         | Instance methods | Class methods |
-| Access instance variables? | ✅ Yes | ❌ No |
-| Access class variables? | ✅ Yes | ✅ Yes |
+buddy = Dog("Buddy", 3)
+print(buddy.bark())
+print(buddy.species)
+```
 
-## `@classmethod` vs `@staticmethod`
+## `self` vs `cls`
 
-| Feature            | `@classmethod` | `@staticmethod` |
-|-------------------|----------------|----------------|
-| First parameter  | `cls` (class itself) | No `self` or `cls` |
-| Access class variables? | ✅ Yes (can modify `cls.var`) | ❌ No (doesn’t access class state) |
-| Modify instance attributes? | ❌ No | ❌ No |
-| Use case | Factory methods, tracking instances | Utility functions unrelated to class state |
+- `self` refers to one object.
+- `cls` refers to the class itself.
+- Use `@classmethod` when you need an alternate constructor or class-wide behavior.
+- Use `@staticmethod` for helper logic that belongs near the class but does not need object or class state.
 
-## Accessing Attributes Inside vs. Outside the Class
+```python
+class Temperature:
+    def __init__(self, celsius):
+        self.celsius = celsius
 
-| Context            | Syntax |
-|-------------------|--------|
-| Inside the class  | `self.attribute` |
-| Outside the class | `object.attribute` |
+    @classmethod
+    def from_fahrenheit(cls, fahrenheit):
+        return cls((fahrenheit - 32) * 5 / 9)
 
-## Special Methods (Magic Methods)
+    @staticmethod
+    def is_freezing(celsius):
+        return celsius <= 0
+```
 
-| Method | Purpose |
-|--------|---------|
-| `__init__` | Constructor (initializes instance variables). |
-| `__str__` | Returns a user-friendly string representation. |
-| `__repr__` | Returns an official string representation. |
-| `__len__` | Defines behavior for `len(obj)`. |
-| `__call__` | Makes an instance callable like a function. |
+## Inheritance Example
 
+```python
+class Animal:
+    def speak(self):
+        raise NotImplementedError
 
+class Cat(Animal):
+    def speak(self):
+        return "meow"
+```
 
+Inheritance is helpful when subclasses truly share behavior. If two objects only share a few helper functions, composition is often easier to maintain.
+
+## Special Methods You Will See Often
+
+| Method | Why it matters |
+|---|---|
+| `__init__` | Set up a new object |
+| `__str__` | Human-friendly string output |
+| `__repr__` | Debug representation |
+| `__len__` | Support `len(obj)` |
+| `__eq__` | Define equality rules |
+
+## A Real-World Mental Model
+
+Think of a class as a template for related records plus the operations they support. A `Cart` object can track items and total cost; a `Book` object can track title and author while also knowing how to display itself.
+
+## Related Reading
+
+- [README.md](README.md)
+- [pets/](pets)
