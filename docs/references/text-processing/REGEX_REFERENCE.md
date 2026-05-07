@@ -1,207 +1,785 @@
-## 📌 Introduction
+# Regular Expressions in Python: Comprehensive Reference
 
-Regular expressions (regex) are a **powerful tool** for **pattern matching** and **text manipulation**. They allow you to **search, extract, and replace** specific patterns within strings, making them invaluable for tasks like:
-- **✅ Data validation**
-- **📊 Parsing**
-- **🔎 Text mining**
-- **📂 Log analysis**
-- **🔄 Search-and-replace operations**
+Regular expressions (regex) describe text patterns. In Python, the `re` module lets you validate formats, extract structured parts from strings, transform text, and build robust parsers for semi-structured data.
 
-This guide will introduce you to the **fundamental concepts, syntax, and real-world applications** of regular expressions.
+## Mental Model
 
+Think of regex as a tiny pattern language with three layers:
 
+1. **Atoms**: literal chars, classes (`a`, `\d`, `[A-Z]`)
+2. **Quantifiers**: how many (`*`, `+`, `{m,n}`)
+3. **Control**: anchors, groups, assertions (`^`, `$`, `()`, `(?=...)`, `\b`)
 
-## Basic Syntax 
+Regex answers: **"Where does this pattern occur?"** and **"What subparts can I capture?"**
 
-### Literal Characters
-Match **exact characters**. For example, the regex `hello` will match the string `"hello"`.
+## Python `re` Module Essentials
 
-### Character Classes
+| Function | Purpose |
+|---|---|
+| `re.search(pattern, text)` | First match anywhere |
+| `re.match(pattern, text)` | Match only at start |
+| `re.fullmatch(pattern, text)` | Entire string must match |
+| `re.findall(pattern, text)` | Return all matches as list |
+| `re.finditer(pattern, text)` | Iterator of match objects |
+| `re.sub(pattern, repl, text)` | Replace matching text |
+| `re.split(pattern, text)` | Split text by pattern |
+| `re.compile(pattern, flags=0)` | Precompile pattern object |
 
-Match **sets of characters**:
+## Raw Strings Matter
 
-| Syntax       | Description                                      | Example                     | 
-|--------------|--------------------------------------------------|-----------------------------| 
-| `[a-z]`      | Matches any lowercase letter.                    | `a`, `b`, `z`               | 
-| `[A-Z]`      | Matches any uppercase letter.                    | `A`, `B`, `Z`               | 
-| `[0-9]`      | Matches any digit.                               | `0`, `1`, `9`               | 
-| `[a-zA-Z0-9]`| Matches any alphanumeric character.              | `a`, `B`, `1`               | 
-| `[^a-z]`     | Matches any character **except** lowercase letters. | `A`, `1`, `@`           | 
+Always prefer raw strings (`r"..."`) for regex patterns:
 
----
+```python
+pattern = r"\d+"   # correct
+# pattern = "\d+"  # works but harder to read
+```
 
-### Anchors
+## Syntax Reference
 
-Match the **beginning or end** of a string:
+## 1) Literal Characters
 
-| Syntax | Description                                      | Example                     | 
-|--------|--------------------------------------------------|-----------------------------| 
-| `^`    | Matches the **beginning** of the string.         | `^hello` matches `"hello world"` | 
-| `$`    | Matches the **end** of the string.               | `world$` matches `"hello world"` | 
+| Pattern | Meaning |
+|---|---|
+| `cat` | Match exact text `cat` |
+| `\.` | Literal dot |
+| `\*` | Literal asterisk |
 
----
+## 2) Character Classes
 
-### Quantifiers
+| Pattern | Meaning | Example matches |
+|---|---|---|
+| `[abc]` | One char: a or b or c | `a`, `b` |
+| `[a-z]` | Lowercase letter | `m` |
+| `[A-Za-z0-9_]` | Word-like class | `K`, `7`, `_` |
+| `[^0-9]` | Any non-digit | `A`, `#` |
 
-Specify **how many times** a character or group should be repeated:
+## 3) Predefined Classes
 
-| Syntax  | Description                                      | Example                     | 
-|---------|--------------------------------------------------|-----------------------------| 
-| `*`     | Matches **zero or more** occurrences.             | `a*` matches `""`, `"a"`, `"aa"` | 
-| `+`     | Matches **one or more** occurrences.              | `a+` matches `"a"`, `"aa"`  | 
-| `?`     | Matches **zero or one** occurrence.               | `a?` matches `""`, `"a"`    | 
-| `{n}`   | Matches **exactly n** occurrences.                | `a{3}` matches `"aaa"`      | 
-| `{n,}`  | Matches **n or more** occurrences.                | `a{2,}` matches `"aa"`, `"aaa"` | 
-| `{n,m}` | Matches **between n and m** occurrences.          | `a{2,4}` matches `"aa"`, `"aaa"`, `"aaaa"` | 
+| Pattern | Meaning |
+|---|---|
+| `\d` | Digit (`[0-9]`) |
+| `\D` | Non-digit |
+| `\w` | Word char (`[A-Za-z0-9_]` in ASCII mode) |
+| `\W` | Non-word char |
+| `\s` | Whitespace |
+| `\S` | Non-whitespace |
 
----
+## 4) Quantifiers
 
-## ⚡ Special Characters
+| Pattern | Meaning |
+|---|---|
+| `*` | 0 or more |
+| `+` | 1 or more |
+| `?` | 0 or 1 |
+| `{n}` | Exactly n |
+| `{n,}` | n or more |
+| `{n,m}` | Between n and m |
 
-| Syntax | Description                                      | Example                     | 
-|--------|--------------------------------------------------|-----------------------------| 
-| `.`    | Matches **any character** (except newline).      | `a.c` matches `"abc"`, `"a1c"` | 
-| `\d`   | Matches a **digit**.                             | `\d` matches `1`, `2`       | 
-| `\w`   | Matches a **word character**.                    | `\w` matches `a`, `_`, `1`  | 
-| `\s`   | Matches **whitespace**.                          | `\s` matches `" "`, `\t`    | 
-| `\D`   | Matches a **non-digit** character.               | `\D` matches `a`, `@`       | 
-| `\W`   | Matches a **non-word** character.                | `\W` matches `@`, `#`       | 
-| `\S`   | Matches a **non-whitespace** character.          | `\S` matches `a`, `1`       | 
+### Greedy vs non-greedy
 
----
+- Greedy: `.*` takes as much as possible.
+- Non-greedy: `.*?` takes as little as possible.
 
-## Grouping and Capturing
+```python
+import re
+text = "<b>one</b><b>two</b>"
+print(re.findall(r"<b>.*</b>", text))    # ['<b>one</b><b>two</b>']
+print(re.findall(r"<b>.*?</b>", text))   # ['<b>one</b>', '<b>two</b>']
+```
 
-Parentheses `()` are used to **group** parts of a regex and **capture** matched text for extraction or backreferencing.
+## 5) Anchors and Boundaries
 
-| Syntax       | Description                                      | Example                     | 
-|--------------|--------------------------------------------------|-----------------------------| 
-| `(pattern)`  | Groups the pattern.                              | `(abc)`                     | 
-| `\1`, `\2`   | Refer to captured groups (**backreferences**).   | `(a).\1` matches `"aba"`    | 
+| Pattern | Meaning |
+|---|---|
+| `^` | Start of string (or line with `re.M`) |
+| `$` | End of string (or line with `re.M`) |
+| `\A` | Absolute start of string |
+| `\Z` | Absolute end of string |
+| `\b` | Word boundary |
+| `\B` | Not a word boundary |
 
-**Example:**
-To extract the **area code** and **phone number** from a string like `"(123) 456-7890"`:
+## 6) Groups and Backreferences
+
+| Pattern | Meaning |
+|---|---|
+| `(abc)` | Capturing group |
+| `(?:abc)` | Non-capturing group |
+| `(?P<name>...)` | Named group |
+| `\1`, `\2` | Backreference by index |
+| `(?P=name)` | Backreference by name |
+
+```python
+m = re.search(r"(?P<area>\d{3})-(?P<number>\d{4})", "555-1234")
+print(m.group("area"), m.group("number"))
+```
+
+## 7) Lookarounds (Assertions)
+
+| Pattern | Meaning |
+|---|---|
+| `(?=...)` | Positive lookahead |
+| `(?!...)` | Negative lookahead |
+| `(?<=...)` | Positive lookbehind |
+| `(?<!...)` | Negative lookbehind |
+
+```python
+text = "ID:1234, ref:ABCD"
+print(re.findall(r"\d+(?=,)", text))  # ['1234']
+```
+
+## Flags Reference
+
+| Flag | Name | Effect |
+|---|---|---|
+| `re.I` | Ignore case | Case-insensitive matching |
+| `re.M` | Multiline | `^` and `$` work per line |
+| `re.S` | Dotall | `.` matches newline too |
+| `re.X` | Verbose | Allows spacing/comments in patterns |
+| `re.A` | ASCII | ASCII-only behavior for `\w`, `\b`, etc. |
+
+Example with verbose mode:
+
+```python
+pattern = re.compile(r"""
+    ^
+    (?P<user>[a-z0-9._%+-]+)
+    @
+    (?P<host>[a-z0-9.-]+)
+    \.
+    (?P<tld>[a-z]{2,})
+    $
+""", re.I | re.X)
+```
+
+## Match Object Reference
+
+| Method | Meaning |
+|---|---|
+| `group()` | Full match |
+| `group(n)` | Capture group by index |
+| `group("name")` | Capture by name |
+| `groups()` | Tuple of all captured groups |
+| `groupdict()` | Dict of named groups |
+| `span()` | Start/end index tuple |
+| `start()`, `end()` | Match boundaries |
+
+## Search Function Comparison
+
+| API | Checks from beginning only? | Requires whole string? | Returns |
+|---|---|---|---|
+| `search` | No | No | First match anywhere |
+| `match` | Yes | No | Match at position 0 |
+| `fullmatch` | Yes | Yes | Full-string match |
+
+## Real-world Patterns
+
+## 1) Email validation (basic practical form)
+
+```python
+email_re = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$", re.I)
+print(bool(email_re.fullmatch("user@example.com")))  # True
+```
+
+## 2) URL extraction
+
+```python
+text = "Visit https://example.com and http://test.org/docs"
+urls = re.findall(r"https?://[^\s]+", text)
+```
+
+## 3) Date parsing (`YYYY-MM-DD`)
+
+```python
+date_re = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+m = date_re.fullmatch("2026-05-07")
+if m:
+    year, month, day = map(int, m.groups())
+```
+
+## 4) Log line parsing
+
+```python
+log = '127.0.0.1 - - [07/May/2026:10:22:11 +0000] "GET /index.html HTTP/1.1" 200 1234'
+pattern = re.compile(
+    r'(?P<ip>\S+)\s+-\s+-\s+\[(?P<time>[^\]]+)\]\s+"(?P<method>\S+)\s+(?P<path>\S+)\s+(?P<proto>[^"]+)"\s+(?P<status>\d{3})\s+(?P<size>\d+)'
+)
+m = pattern.search(log)
+if m:
+    print(m.groupdict())
+```
+
+## 5) Tokenizing words and numbers
+
+```python
+text = "Order 12 apples, 3 bananas."
+tokens = re.findall(r"\d+|[A-Za-z]+", text)
+```
+
+## Replacement Patterns (`re.sub`)
+
+```python
+text = "Call me at 555-1234"
+masked = re.sub(r"\d", "*", text)
+print(masked)
+```
+
+Using captured groups in replacement:
+
+```python
+name = "Doe, Jane"
+fixed = re.sub(r"^(\w+),\s*(\w+)$", r"\2 \1", name)
+print(fixed)  # Jane Doe
+```
+
+Using function replacement:
+
+```python
+def repl(m):
+    return str(int(m.group()) * 2)
+
+print(re.sub(r"\d+", repl, "x=5 y=10"))  # x=10 y=20
+```
+
+## Splitting with Regex
+
+```python
+line = "apple, banana;pear | grape"
+parts = re.split(r"\s*[,;|]\s*", line)
+print(parts)
+```
+
+## Performance Guidance
+
+| Practice | Benefit |
+|---|---|
+| Compile repeated patterns | Avoid re-parsing pattern each call |
+| Use specific classes instead of `.*` | Reduce backtracking |
+| Prefer anchors when validating full strings | Faster reject and clearer intent |
+| Break giant patterns into verbose mode with comments | Easier maintenance |
+
+## Catastrophic Backtracking (Concept)
+
+Certain nested quantifier patterns can blow up runtime on near-miss inputs.
+
+Risky style example:
 
 ```regex
-(\d{3}) (\d{3}-\d{4})
+^(a+)+$
 ```
 
-**Python Example:**
+Safer strategy:
+- avoid ambiguous nested repeats,
+- use specific boundaries,
+- test against adversarial inputs.
+
+## Debugging Workflow
+
+1. Start with a tiny target string.
+2. Build pattern in increments.
+3. Test each group before adding quantifiers.
+4. Print `match.span()` and `groups()`.
+5. Add anchors and boundaries for precision.
+
+## Regex vs Plain String Methods
+
+| Task | Prefer |
+|---|---|
+| Exact prefix/suffix checks | `str.startswith`, `str.endswith` |
+| Simple replacement | `str.replace` |
+| Structured extraction by pattern | `re` |
+| Complex validation with multiple conditions | `re.fullmatch` |
+
+Use regex when pattern logic is genuinely pattern-based; don't overuse it for simple string operations.
+
+## Practical Recipe: Parsing Key-Value Pairs
 
 ```python
-import re
-
-text = "(123) 456-7890"
-pattern = r"(\d{3}) (\d{3}-\d{4})"
-match = re.search(pattern, text)
-
-if match:
-    area_code = match.group(1)  # "123"
-    phone_number = match.group(2)  # "456-7890"
-    print(f"📞 Area Code: {area_code}, Phone: {phone_number}")
+text = "name=alice;role=admin;active=true"
+pairs = re.findall(r"([a-z_]+)=([^;]+)", text)
+result = {k: v for k, v in pairs}
+print(result)
 ```
 
-## Common Use Cases
+## Practical Recipe: Strong Password Check
 
-| Type | Syntax |
-|------|--------|
-| ✉️ Email Validation | `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$` | 
-| 🌐 Extracting URLs | `https?://[^\s]+` | 
-| 📅 Finding Dates | `\d{2}-\d{2}-\d{4}` | 
-| 🔒 Password Strength Check | `^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$` |
-
-**Descriptions:**
-- Validates email addresses (e.g., "user@example.com").
-- Matches HTTP/HTTPS URLs in text.
-- Matches dates in DD-MM-YYYY format.
-- Ensures passwords have at least one uppercase letter, one lowercase letter, one digit, one special character, and are at least 8 characters long.
-
-
-## 🐍 **Regex in Python** 
-Python’s **re** module provides full support for regular expressions:
 ```python
-import re
+password_re = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,64}$"
+)
 
-## 🔍 Search for a pattern
-```python
-text = "The quick brown fox jumps over the lazy dog."
-match = re.search(r"brown \w+", text)
-print(match.group())  # "brown fox"
-```
-## 📋 Find all occurrences
-```python
-matches = re.findall(r"\b\w{3}\b", text)
-print(matches)  # ['The', 'fox', 'the', 'dog']
-```
-### 🔄 Replace Text
-```python
-new_text = re.sub(r"fox", "cat", text)
-print(new_text)  # "The quick brown cat jumps over the lazy dog."
+print(bool(password_re.fullmatch("SafePass1!")))
 ```
 
----
-
-## ⚡ Performance Considerations
-
-- ⚠️ Avoid greedy quantifiers (e.g., `.*`) when possible. Use non-greedy quantifiers (e.g., `.*?`) for efficiency.
-- 🚀 Pre-compile regex patterns for repeated use:
-  ```python
-  pattern = re.compile(r"\d{3}-\d{4}")
-  ```
-- Use specific patterns instead of generic ones (e.g., `\d` instead of `.`).
-
----
-
-## 📂 Practical Examples
-
-### 1.  Extracting Hashtags
+## Practical Recipe: Cleaning Whitespace
 
 ```python
-text = "Love #regex! It's #awesome for #text processing."
-hashtags = re.findall(r"#\w+", text)
-print(hashtags)  # ['#regex', '#awesome', '#text']
+def normalize_whitespace(text):
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 ```
 
-### 2.  Parsing Log Files
+## Common Mistakes
+
+| Mistake | Example | Fix |
+|---|---|---|
+| Forgetting raw string prefix | `"\bword\b"` confusion | Use `r"\bword\b"` |
+| Using `match` when full validation needed | Partial acceptance | Use `fullmatch` |
+| Overusing greedy `.*` | Over-captures text | Use precise classes or `.*?` |
+| Assuming `\w` is all Unicode letters | Locale/flag differences | Use explicit classes as needed |
+| Building unreadable mega-patterns | Hard maintenance | Use `re.X` verbose mode |
+
+## Practice Goals
+
+- Write patterns for extraction, validation, and replacement.
+- Use named groups and lookarounds intentionally.
+- Explain `search` vs `match` vs `fullmatch`.
+- Optimize a slow regex by reducing ambiguity.
+
+Regex mastery dramatically improves text-processing productivity for logs, APIs, ETL pipelines, and data cleaning tasks.
+
+## Extended Pattern Library
+
+## Contact and Identifier Patterns
+
+| Use case | Pattern | Notes |
+|---|---|---|
+| Username (3-20 chars) | `^[a-zA-Z][a-zA-Z0-9_]{2,19}$` | Must start with letter |
+| UUID v4 (simple) | `^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$` | Case-insensitive recommended |
+| IPv4 | `^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$` | Strict numeric ranges |
+| Hex color | `^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$` | CSS color formats |
+
+## Log Parsing Recipes
+
+### Apache-like logs
 
 ```python
-log_entry = '127.0.0.1 - james [01/Jan/2025:12:34:56 +0000] "GET /index.html" 200 1234'
-pattern = r'(\S+) - (\S+) \[(.*?)\] "(\S+ \S+)" (\d+) (\d+)'
-match = re.search(pattern, log_entry)
-if match:
-    ip, user, date, request, status, size = match.groups()
-    print(f"🖥️ IP: {ip}, 👤 User: {user}, 📄 Request: {request}")
+apache_re = re.compile(
+    r'(?P<ip>\S+)\s+\S+\s+\S+\s+\[(?P<time>[^\]]+)\]\s+"(?P<method>\S+)\s+(?P<path>\S+)\s+(?P<proto>[^"]+)"\s+(?P<status>\d{3})\s+(?P<size>\S+)'
+)
 ```
 
-### 3.  Validating Phone Numbers
+### Key-value logs (`k=v`)
 
 ```python
-phone_pattern = r'^(\+\d{1,3}[- ]?)?\d{10}$'
-print(re.match(phone_pattern, "+1-1234567890"))  # ✅ Valid
-print(re.match(phone_pattern, "12345"))  # ❌ Invalid
+line = "level=INFO user=alice op=login duration_ms=18"
+pairs = re.findall(r"([a-z_]+)=([^\s]+)", line)
+record = dict(pairs)
 ```
 
----
+### Timestamp extraction
 
-##  Debugging and Testing
+```python
+ts = re.search(r"\b\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}\b", "at 2026-05-07 12:31:15 done")
+```
 
-- Use online tools like [Regex101](https://regex101.com/) to test and debug regex patterns.
-- Break complex patterns into smaller, manageable parts.
+## Text Normalization Patterns
 
----
-
-##  Regex Cheat Sheet
-![Regex Cheat Sheet](https://i.imgur.com/OQStwMn.png)
-Courtesy: *https://i.imgur.com/OQStwMn.png*
-
----
+```python
+def normalize_spaces(s):
+    return re.sub(r"\s+", " ", s).strip()
 
 
-##  Conclusion
+def normalize_quotes(s):
+    return re.sub(r"[“”]", '"', s)
 
-Regular expressions are a versatile and powerful tool for text processing. By mastering the syntax and applying best practices, you can efficiently solve a wide range of string manipulation tasks. Start with simple patterns, gradually build complexity, and always test your regex against real-world data.
 
-**Next Steps:**
-- Practice with real-world datasets.
-- Explore regex in other programming languages (e.g., JavaScript, Perl).
-- Learn advanced techniques like recursive patterns and conditional matching.
+def remove_non_alnum_keep_space(s):
+    return re.sub(r"[^\w\s]", "", s)
+```
+
+## Advanced Grouping Notes
+
+| Syntax | Use when |
+|---|---|
+| `(?:...)` | Grouping without capture overhead |
+| `(?P<name>...)` | Need semantic extraction by field name |
+| `(?P=name)` | Enforce repeated structure with clarity |
+| `(?>...)` | Atomic groups are not available in Python `re` |
+
+Python's `re` favors readability and portability over every advanced engine feature.
+
+## Lookaround Use Cases
+
+### 1) Extract value before `%`
+
+```python
+print(re.findall(r"\d+(?=%)", "cpu=87% mem=42%"))
+```
+
+### 2) Ensure word not followed by suffix
+
+```python
+print(re.findall(r"cat(?!s)", "cat cats catlike"))
+```
+
+### 3) Match currency amounts after `$`
+
+```python
+print(re.findall(r"(?<=\$)\d+(?:\.\d{2})?", "Total $12.50 and fee $3"))
+```
+
+## Multi-line and Dotall Behavior
+
+```python
+text = "line1\nline2\nline3"
+print(bool(re.search(r"^line2$", text, re.M)))    # True
+print(bool(re.search(r"line1.*line3", text, re.S)))  # True
+```
+
+## Named Capture for Structured Parsing
+
+```python
+event_re = re.compile(
+    r"^(?P<date>\d{4}-\d{2}-\d{2})\s+"
+    r"(?P<level>INFO|WARN|ERROR)\s+"
+    r"(?P<message>.+)$"
+)
+
+line = "2026-05-07 ERROR payment failed"
+m = event_re.fullmatch(line)
+if m:
+    event = m.groupdict()
+```
+
+## Defensive Validation with `fullmatch`
+
+`search` may accept unwanted strings.
+
+```python
+print(bool(re.search(r"\d+", "abc123xyz")))      # True
+print(bool(re.fullmatch(r"\d+", "abc123xyz")))   # False
+```
+
+Use `fullmatch` for strict validation fields.
+
+## Pattern Composition Tips
+
+### Build from fragments
+
+```python
+YEAR = r"\d{4}"
+MONTH = r"0[1-9]|1[0-2]"
+DAY = r"0[1-9]|[12]\d|3[01]"
+DATE = rf"(?:{YEAR})-(?:{MONTH})-(?:{DAY})"
+
+date_re = re.compile(rf"^{DATE}$")
+```
+
+### Compile once, reuse often
+
+```python
+WORD_RE = re.compile(r"\b[a-zA-Z]{3,}\b")
+for text in ["one two", "many words here"]:
+    print(WORD_RE.findall(text))
+```
+
+## Parsing Semi-structured Config
+
+```python
+cfg = """
+host = localhost
+port = 5432
+ssl = true
+"""
+
+entry_re = re.compile(r"^\s*([a-z_]+)\s*=\s*(.+?)\s*$", re.M)
+parsed = {k: v for k, v in entry_re.findall(cfg)}
+```
+
+## Common Extraction Patterns
+
+| Goal | Pattern |
+|---|---|
+| Hashtags | `#\w+` |
+| Mentions | `@\w+` |
+| Quoted text | `"([^"]*)"` |
+| Integers incl. sign | `[+-]?\d+` |
+| Decimal number | `[+-]?\d+(?:\.\d+)?` |
+| Repeated words | `\b(\w+)\s+\1\b` |
+
+## Data Cleaning Pipeline Example
+
+```python
+def clean_text(s):
+    s = s.lower()
+    s = re.sub(r"https?://[^\s]+", "", s)   # remove URLs
+    s = re.sub(r"[^a-z0-9\s]", " ", s)      # keep letters/numbers/spaces
+    s = re.sub(r"\s+", " ", s).strip()      # collapse spaces
+    return s
+```
+
+## Testing Regex with Cases
+
+```python
+def assert_matches(pattern, valid, invalid, flags=0):
+    r = re.compile(pattern, flags)
+    for s in valid:
+        assert r.fullmatch(s), f"Expected valid: {s}"
+    for s in invalid:
+        assert not r.fullmatch(s), f"Expected invalid: {s}"
+
+assert_matches(
+    r"^[a-z]{3,8}$",
+    valid=["alpha", "python"],
+    invalid=["A", "ab", "toolongword", "abc123"],
+)
+```
+
+## Readability Strategies for Large Patterns
+
+- Use `re.X` and named groups.
+- Keep one semantic component per line.
+- Add comments for edge constraints.
+- Maintain test vectors next to pattern definitions.
+
+## Practical Anti-patterns
+
+| Anti-pattern | Why it hurts |
+|---|---|
+| Mega-regex replacing parser when grammar is complex | Hard to maintain and debug |
+| Relying only on regex for semantic validation | Regex checks shape, not full meaning |
+| Ignoring Unicode/locale requirements | Unexpected misses or false matches |
+| Copy-pasting internet patterns without tests | Hidden vulnerabilities and false assumptions |
+
+## When Not to Use Regex
+
+Prefer other tools when:
+- format is structured (use JSON/YAML/XML parsers),
+- delimiters are simple (`split`, `partition`),
+- logic requires nested grammar parsing (use tokenizer/parser).
+
+## Extended Practice Set
+
+1. Validate usernames with start/end rules.
+2. Extract all signed decimal numbers from reports.
+3. Parse timestamped logs into dictionaries.
+4. Remove HTML tags conservatively from simple snippets.
+5. Build a pattern that matches Python identifiers but excludes keywords.
+
+Regex is most powerful when paired with disciplined testing, clear naming, and incremental pattern construction.
+
+## Domain-specific Mini References
+
+## Financial Amount Parsing
+
+```python
+amount_re = re.compile(r"^(?P<currency>[A-Z]{3})\s+(?P<amount>[+-]?\d+(?:\.\d{2})?)$")
+for s in ["USD 12.50", "EUR -9.00"]:
+    m = amount_re.fullmatch(s)
+    if m:
+        print(m.groupdict())
+```
+
+## Semantic Version Extraction
+
+```python
+semver_re = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$")
+print(bool(semver_re.fullmatch("1.2.3-alpha+build.9")))
+```
+
+## HTML-like tag pair matching (simple)
+
+```python
+tag_re = re.compile(r"<(?P<tag>[a-z][a-z0-9]*)>(?P<body>.*?)</(?P=tag)>", re.I | re.S)
+```
+
+This is useful for simple snippets, but full HTML parsing should use an HTML parser.
+
+## CSV-like quoted field extraction (lightweight)
+
+```python
+line = 'a,"b,c",d'
+fields = re.findall(r'"(?:[^"]|"")*"|[^,]+', line)
+```
+
+## Regex for Data Quality Audits
+
+```python
+def find_suspicious_ids(ids):
+    bad = []
+    pattern = re.compile(r"^[A-Z]{2}-\d{6}$")
+    for value in ids:
+        if not pattern.fullmatch(value):
+            bad.append(value)
+    return bad
+```
+
+## Benchmarking Pattern Choices
+
+```python
+import time
+
+texts = ["user123@example.com"] * 10000
+p1 = re.compile(r".+@.+\..+")
+p2 = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$", re.I)
+
+start = time.perf_counter()
+_ = [bool(p1.fullmatch(t)) for t in texts]
+print("p1", time.perf_counter() - start)
+
+start = time.perf_counter()
+_ = [bool(p2.fullmatch(t)) for t in texts]
+print("p2", time.perf_counter() - start)
+```
+
+More precise patterns are often both safer and faster.
+
+## Regex Design Checklist
+
+- Define whether you need extraction, validation, or replacement.
+- Anchor full validations with `^...$` or `fullmatch`.
+- Prefer named groups for fields with semantic meaning.
+- Keep patterns tested with valid/invalid examples.
+- Avoid catastrophic patterns in user-facing services.
+
+## Pattern Documentation Template
+
+For each production regex, document:
+
+1. Purpose
+2. Allowed input examples
+3. Rejected input examples
+4. Captured groups and semantics
+5. Performance notes
+
+## Comprehensive Practice Grid
+
+| Level | Exercise |
+|---|---|
+| Beginner | Match phone numbers and postal codes |
+| Intermediate | Parse log entries into structured dicts |
+| Intermediate | Normalize free text with chained substitutions |
+| Advanced | Build verbose pattern with lookarounds and named groups |
+| Advanced | Optimize a slow regex and write benchmark tests |
+
+Regex becomes maintainable when patterns are treated like code: named, tested, reviewed, and documented.
+
+## Extended End-to-End Examples
+
+## Example: Parsing application metrics lines
+
+```python
+line = "service=api latency_ms=123 status=200 route=/users"
+metric_re = re.compile(r"([a-z_]+)=([^\s]+)")
+metrics = {k: v for k, v in metric_re.findall(line)}
+print(metrics)
+```
+
+## Example: Extract and validate markdown headings
+
+```python
+doc = """
+# Title
+## Section A
+text
+### Subsection
+"""
+
+heading_re = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+)$", re.M)
+for m in heading_re.finditer(doc):
+    print(len(m.group("level")), m.group("title"))
+```
+
+## Example: Redacting PII-like patterns
+
+```python
+def redact(text):
+    text = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[SSN]", text)
+    text = re.sub(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", "[EMAIL]", text, flags=re.I)
+    return text
+```
+
+## Example: Parsing command-like input
+
+```python
+command = "deploy --env=prod --replicas=3 --dry-run"
+flag_re = re.compile(r"--(?P<name>[a-z-]+)(?:=(?P<value>[^\s]+))?")
+flags = {}
+for m in flag_re.finditer(command):
+    flags[m.group("name")] = m.group("value") if m.group("value") is not None else True
+print(flags)
+```
+
+## Example: Duplicate word detector with normalization
+
+```python
+def duplicate_words(sentence):
+    return re.findall(r"\b(\w+)\b(?=\s+\1\b)", sentence.lower())
+
+print(duplicate_words("This is is a test Test"))
+```
+
+## Example: Identifier validation excluding Python keywords
+
+```python
+import keyword
+
+identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+def is_valid_identifier(name):
+    return bool(identifier_re.fullmatch(name)) and not keyword.iskeyword(name)
+```
+
+## Capturing Strategy Guide
+
+| Goal | Strategy |
+|---|---|
+| Keep only full match | Use no explicit groups or non-capturing groups |
+| Extract several fields | Use named groups with `groupdict()` |
+| Reuse matched fragment later | Backreference (`\1` / `(?P=name)`) |
+| Repetition only for grouping | Non-capturing group `(?:...)` |
+
+## Replacement Strategy Guide
+
+| Task | Replacement approach |
+|---|---|
+| Static replacement | String replacement text |
+| Rearranging captured parts | Backreference replacement (`r"\2 \1"`) |
+| Conditional/computed replacement | Function callback replacement |
+
+## Unicode and Locale Notes
+
+By default, Python `re` in Python 3 works with Unicode strings.
+
+- `\w` includes many word characters depending on mode.
+- Use `re.A` for ASCII-only behavior.
+- For strict multilingual processing, test language-specific examples explicitly.
+
+## Safe Regex Deployment Checklist
+
+- Benchmark against representative large inputs.
+- Keep patterns version-controlled and documented.
+- Add unit tests with expected match groups.
+- Include negative tests for common malformed input.
+- Avoid exposing catastrophic patterns to untrusted text in hot paths.
+
+## Regex Maintenance Workflow
+
+1. Document intent in comments or nearby docs.
+2. Add examples of accepted and rejected inputs.
+3. Encapsulate pattern in named constant.
+4. Add tests before editing pattern.
+5. Review changes with a peer before production rollout.
+
+## Production-ready Pattern Constant Example
+
+```python
+EMAIL_PATTERN = re.compile(
+    r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",
+    re.I,
+)
+
+DATE_PATTERN = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+```
+
+## Regex Learning Milestones
+
+| Milestone | Skills |
+|---|---|
+| 1 | Literals, classes, quantifiers |
+| 2 | Anchors, groups, replacement |
+| 3 | Named groups, lookarounds, flags |
+| 4 | Performance tuning and maintainability |
+| 5 | Production-grade test-driven regex development |
+
+If you can design, explain, and test patterns using these milestones, you're operating at an advanced practical regex level in Python.
