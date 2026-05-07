@@ -140,4 +140,4 @@ curl -X DELETE http://localhost:5000/books/1
 
 ## 🎯 Conclusion
 
-This tutorial provides a basic setup for a Flask REST API. You can build upon this example to create more complex APIs with additional features like:
+This tutorial provides a basic setup for a Flask REST API. You can build upon this example to create more complex APIs with features like authentication, pagination, input validation, and database integration.

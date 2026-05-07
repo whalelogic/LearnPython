@@ -128,7 +128,6 @@ Result:
 | Row 1    | Data     | Data     |
 | Row 2    | Data     | Data     |
 
-# Alignment
 | Left | Center | Right |
 |:-----|:------:|------:|
 | L    | C      | R     |
