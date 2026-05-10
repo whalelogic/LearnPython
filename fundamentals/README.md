@@ -11,7 +11,10 @@ This folder introduces the syntax and mental models that every other topic in th
 
 ## Folder Map
 
-- [functions/Built_In_Functions.md](functions/Built_In_Functions.md) — practical built-in functions you will use constantly
+- [functions/FUNCTIONS.md](functions/FUNCTIONS.md) — creating and using your own functions
+- [functions/functions_playground.py](functions/functions_playground.py) — interactive playground for function concepts
+- [control_flow/CONTROL_FLOW.md](control_flow/CONTROL_FLOW.md) — conditionals, loops, and branching
+- [control_flow/control_flow_playground.py](control_flow/control_flow_playground.py) — interactive playground for control flow
 - [core/README.md](core/README.md) — deeper references for keywords, modules, data types, exceptions, and contexts
 
 ## Quick Examples

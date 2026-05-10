@@ -9,3 +9,5 @@ wheels/
 .venv
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
+# Gemini.md
+GEMINI.md/

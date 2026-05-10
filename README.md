@@ -8,6 +8,7 @@ A practical Python learning repository organized by topic instead of a single ca
 - [Data Structures](data_structures/README.md)
 - [Object-Oriented Programming](oop/README.md)
 - [Regex](regex/README.md)
+- [HTTP and APIs](http/README.md)
 - [Standard Library](standard_library/README.md)
 - [Data Analysis](data/README.md)
 - [Machine Learning](machine_learning/README.md)
