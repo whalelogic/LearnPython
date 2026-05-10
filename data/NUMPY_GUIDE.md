@@ -55,104 +55,181 @@ This kind of vectorized transformation is what makes NumPy powerful.
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Array Memory Model
 
-### 1) Learning Goals
+A NumPy array is a contiguous block of typed memory plus metadata (shape, dtype, strides). Understanding this explains why slices are views (no copy) and why dtype matters for performance.
 
-By the end of this topic, you should be able to:
+```python
+import numpy as np
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+a = np.arange(6, dtype=np.float32)
+print(a.nbytes)     # 24  (6 elements × 4 bytes each)
+print(a.strides)    # (4,) — step 4 bytes to reach the next element
 
-### 2) Mental Model
+b = a.reshape(2, 3)
+print(b.strides)    # (12, 4) — 12 bytes to next row, 4 bytes to next column
 
-Use this short mental model while reading examples:
+# Slices share memory
+b[0, 0] = 99
+print(a[0])         # 99.0 — a was changed too
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+# Force a copy when independence is required
+c = b.copy()
+```
 
-If you cannot explain all five parts, pause and simplify the example.
+### Vectorization: Replacing Loops
 
-### 3) Terminology Drill
+Loops in Python are slow because each iteration has interpreter overhead. NumPy operations run in compiled C and operate on entire arrays at once.
 
-Review these terms and define each in your own words:
+```python
+import numpy as np
+import time
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+data = np.random.default_rng(0).standard_normal(1_000_000)
 
-A useful habit is to write one sentence per term plus one concrete example.
+# Slow — Python loop
+t0 = time.perf_counter()
+result = [x**2 for x in data]
+print(f"loop:   {time.perf_counter() - t0:.3f}s")
 
-### 4) Practical Checklist
+# Fast — vectorized
+t0 = time.perf_counter()
+result = data ** 2
+print(f"numpy:  {time.perf_counter() - t0:.3f}s")
+# NumPy is typically 20–100× faster here
+```
 
-When implementing this topic in a project, verify:
+**Rule of thumb:** if you are writing a `for` loop over array elements, there is almost always a NumPy operation that replaces it.
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+### Broadcasting Rules
 
-### 5) Common Mistakes and Corrections
+Two shapes broadcast when, reading dimensions from the right, each pair of values is either equal or one of them is 1.
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+| Shape A | Shape B | Result | Notes |
+|---|---|---|---|
+| `(3,)` | `(3,)` | `(3,)` | Same shape — no broadcast |
+| `(1, 3)` | `(2, 1)` | `(2, 3)` | Both dimensions broadcast |
+| `(4, 3)` | `(3,)` | `(4, 3)` | B treated as `(1, 3)` |
+| `(4, 3)` | `(4, 1)` | `(4, 3)` | B column repeated 3 times |
+| `(4, 3)` | `(4,)` | Error | Trailing dims `3 ≠ 4` |
 
-### 6) Debugging Workflow
+```python
+prices  = np.array([10, 20, 30])          # shape (3,)
+weights = np.array([[0.5], [0.25]])       # shape (2, 1)
+print(prices * weights)
+# [[  5.  10.  15.]
+#  [  2.5  5.   7.5]]    — result shape (2, 3)
+```
 
-Follow this process when something breaks:
+### Indexing Patterns
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+```python
+a = np.arange(20).reshape(4, 5)
 
-### 7) Mini Exercises
+# Basic slicing (returns a view)
+a[1, :]          # entire row 1
+a[:, 2]          # entire column 2
+a[1:3, 0:2]      # sub-matrix
 
-Try these short tasks:
+# Boolean masking (returns a copy)
+a[a > 10]        # flat array of values > 10
+a[(a % 2) == 0]  # even values
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+# Fancy indexing (returns a copy)
+a[[0, 3], :]     # rows 0 and 3
+a[:, [1, 4]]     # columns 1 and 4
+
+# np.where — conditional replacement
+np.where(a > 10, a, 0)   # keep value if > 10, else 0
+```
+
+### Array Creation Quick-Reference
+
+| Function | Purpose | Example |
+|---|---|---|
+| `np.array(data, dtype=)` | From Python list or nested list | `np.array([[1, 2], [3, 4]], dtype=float)` |
+| `np.zeros(shape)` | All-zero array | `np.zeros((3, 4))` |
+| `np.ones(shape)` | All-one array | `np.ones((2, 2))` |
+| `np.full(shape, val)` | All same value | `np.full((3,), 7)` |
+| `np.eye(n)` | Identity matrix | `np.eye(4)` |
+| `np.arange(start, stop, step)` | Evenly spaced integers | `np.arange(0, 10, 2)` |
+| `np.linspace(start, stop, n)` | `n` evenly spaced floats (inclusive) | `np.linspace(0.0, 1.0, 5)` |
+| `np.random.default_rng(seed).standard_normal(shape)` | N(0,1) random floats | `rng.standard_normal((100, 4))` |
+| `np.loadtxt(file, delimiter=)` | Load plain-text numeric file | `np.loadtxt("data.csv", delimiter=",")` |
+| `np.load(file)` | Load `.npy` binary | `np.load("array.npy")` |
+| `np.concatenate([a, b], axis=)` | Join existing arrays | `np.concatenate([a, b], axis=0)` |
+
+### Aggregation and Math Quick-Reference
+
+| Function | Description | Axis note |
+|---|---|---|
+| `np.sum(a, axis=)` | Sum | `axis=0` collapses rows; `axis=1` collapses columns |
+| `np.mean(a, axis=)` | Arithmetic mean | Same axis convention |
+| `np.std(a, axis=)` | Standard deviation | `ddof=1` for sample std |
+| `np.min(a)` / `np.max(a)` | Global min/max | |
+| `np.argmin(a)` / `np.argmax(a)` | Index of min/max | |
+| `np.cumsum(a)` | Cumulative sum | |
+| `np.diff(a)` | First differences | |
+| `np.clip(a, lo, hi)` | Clamp values | |
+| `np.where(cond, x, y)` | Element-wise conditional | |
+| `np.unique(a)` | Sorted unique values | |
+| `np.dot(a, b)` / `a @ b` | Dot / matrix product | |
+| `np.linalg.norm(a)` | Euclidean norm | |
+| `np.linalg.inv(a)` | Matrix inverse | |
+| `np.linalg.eig(a)` | Eigenvalues and eigenvectors | |
+
+### NaN-Safe Variants
+
+Always prefer the `nan*` family when data may contain missing values:
+
+| Unsafe | NaN-safe |
+|---|---|
+| `np.mean(a)` | `np.nanmean(a)` |
+| `np.sum(a)` | `np.nansum(a)` |
+| `np.min(a)` | `np.nanmin(a)` |
+| `np.max(a)` | `np.nanmax(a)` |
+| `np.std(a)` | `np.nanstd(a)` |
+
+### Integration with the Python Ecosystem
+
+| NumPy pairs with | Bridge |
+|---|---|
+| `pandas` | `df["col"].to_numpy()` / `pd.DataFrame(arr, columns=[...])` |
+| `matplotlib` | `plt.plot(x, np.sin(x))` — arrays plug in directly |
+| `scikit-learn` | Models expect 2-D float arrays: `X.reshape(-1, 1)` |
+| `scipy` | `from scipy import stats; stats.ttest_ind(a, b)` |
+| `Pillow` | `np.array(Image.open("img.png"))` → `(H, W, 3)` uint8 |
+| Python built-ins | `len(arr)` returns first dim; prefer `arr.shape[0]` for clarity |
+
+### Progress Rubric
+
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Create arrays from lists, index rows/columns, call `np.mean` and `np.sum` |
+| **Developing** | Reshape arrays, apply broadcasting, use boolean masking and `np.where` |
+| **Proficient** | Handle dtype/shape mismatches, chain transforms without loops, use NaN-safe aggregation |
+| **Advanced** | Write fully vectorized pipelines, use `np.linalg`, reason about views vs copies and memory layout |
+
+### Suggested Practice Projects
+
+1. **Normalize a matrix** — Given a 2-D score matrix, subtract the column mean and divide by the column std. Verify result has zero mean and unit std per column.
+2. **Moving average** — Compute a 3-period moving average over a 1-D price array without any Python loops.
+3. **Boolean masking pipeline** — Filter rows where column A exceeds a threshold, then compute the mean of column B — no loop.
+4. **Image as array** — Load a grayscale PNG, flip it horizontally with `[:, ::-1]`, compute the mean pixel value, and save back.
+5. **Matrix operations** — Build two random matrices, multiply with `@`, compute the transpose, and verify `(A @ B).T == B.T @ A.T`.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| View vs copy | Slices share memory; modifying a slice modifies the original | Use `.copy()` when independence is required |
+| Integer dtype truncation | `np.array([1, 2]) / 3` gives `[0, 0]` in some contexts | Use float literals or `dtype=float` |
+| `np.sum` vs `sum` | Python `sum` is 10–100× slower on large arrays | Always use `np.sum` on NumPy arrays |
+| Shape `(n,)` vs `(n,1)` | Broadcasting treats 1-D and 2-D column vectors differently | Use `.reshape(-1, 1)` for a column vector |
+| NaN propagation | `np.mean` returns `NaN` if any element is `NaN` | Use `np.nanmean`, `np.nansum`, etc. |
+| In-place ops on views | `a[:] *= 2` modifies the source | Be deliberate about in-place vs new-array operations |
 
 ### 8) Integration Notes
 

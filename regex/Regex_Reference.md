@@ -58,154 +58,201 @@ print(re.split(r"[,;|]", line))
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Pattern Syntax Quick-Reference
 
-### 1) Learning Goals
+| Pattern | Meaning | Matches | Does not match |
+|---|---|---|---|
+| `\d` | Digit `[0-9]` | `7`, `0` | `a`, ` ` |
+| `\D` | Non-digit | `a`, `!` | `5` |
+| `\w` | Word char `[a-zA-Z0-9_]` | `name_1` | `-`, ` ` |
+| `\W` | Non-word char | ` `, `-` | `a` |
+| `\s` | Whitespace | space, tab, `\n` | `a` |
+| `\S` | Non-whitespace | `a`, `!` | ` ` |
+| `.` | Any char except `\n` | `a`, `9`, `!` | `\n` |
+| `^` | Start of string (or line with `re.M`) | — | — |
+| `$` | End of string (or line with `re.M`) | — | — |
+| `\b` | Word boundary | Between `\w` and `\W` | — |
+| `[abc]` | Character class | `a`, `b`, `c` | `d` |
+| `[^abc]` | Negated class | anything except `a`, `b`, `c` | — |
+| `[a-z]` | Character range | `a` through `z` | `A`, `1` |
+| `a\|b` | Alternation | `a` or `b` | `c` |
+| `(abc)` | Capturing group | captures `abc` | — |
+| `(?:abc)` | Non-capturing group | groups without capturing | — |
+| `(?P<name>...)` | Named group | captures with name | — |
+| `(?=...)` | Lookahead (positive) | position before match | — |
+| `(?!...)` | Lookahead (negative) | position where not followed by | — |
+| `(?<=...)` | Lookbehind (positive) | position after match | — |
 
-By the end of this topic, you should be able to:
+#### Quantifiers
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+| Quantifier | Meaning | Greedy? |
+|---|---|---|
+| `*` | Zero or more | Yes |
+| `+` | One or more | Yes |
+| `?` | Zero or one (optional) | Yes |
+| `{n}` | Exactly `n` | — |
+| `{n,}` | At least `n` | Yes |
+| `{n,m}` | Between `n` and `m` | Yes |
+| `*?` / `+?` / `??` | Lazy (minimal) versions | No |
 
-### 2) Mental Model
+### `re` Module Function Reference
 
-Use this short mental model while reading examples:
+| Function | Description | Returns |
+|---|---|---|
+| `re.search(pat, s, flags=0)` | Find first match anywhere in string | `Match` or `None` |
+| `re.match(pat, s, flags=0)` | Match only at the start of string | `Match` or `None` |
+| `re.fullmatch(pat, s, flags=0)` | Entire string must match | `Match` or `None` |
+| `re.findall(pat, s, flags=0)` | All non-overlapping matches | `list[str]` or `list[tuple]` |
+| `re.finditer(pat, s, flags=0)` | Iterator of `Match` objects | iterator |
+| `re.sub(pat, repl, s, count=0)` | Replace matches with `repl` | `str` |
+| `re.subn(pat, repl, s)` | Replace and return count | `(str, int)` |
+| `re.split(pat, s, maxsplit=0)` | Split on pattern | `list[str]` |
+| `re.compile(pat, flags=0)` | Compile for reuse | `re.Pattern` |
+| `re.escape(s)` | Escape all special chars in `s` | `str` |
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+### `Match` Object Methods
 
-If you cannot explain all five parts, pause and simplify the example.
+| Method / Attribute | Returns |
+|---|---|
+| `.group(0)` or `.group()` | Entire matched string |
+| `.group(n)` | Content of capturing group `n` |
+| `.group("name")` | Content of named group |
+| `.groups()` | Tuple of all capturing groups |
+| `.groupdict()` | Dict of all named groups |
+| `.start()` / `.end()` | Start / end index in original string |
+| `.span()` | `(start, end)` tuple |
 
-### 3) Terminology Drill
+### Flags Reference
 
-Review these terms and define each in your own words:
+| Flag | Shorthand | Effect |
+|---|---|---|
+| `re.IGNORECASE` | `re.I` | Case-insensitive matching |
+| `re.MULTILINE` | `re.M` | `^` and `$` match at each line boundary |
+| `re.DOTALL` | `re.S` | `.` matches `\n` too |
+| `re.VERBOSE` | `re.X` | Allow whitespace and `#` comments in pattern |
+| `re.ASCII` | `re.A` | `\w`, `\d`, etc. match ASCII only |
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+```python
+# re.VERBOSE — break a complex pattern across lines
+import re
 
-A useful habit is to write one sentence per term plus one concrete example.
+date_pat = re.compile(r"""
+    (?P<year>  \d{4})   # four-digit year
+    [-/]
+    (?P<month> \d{1,2}) # one or two digit month
+    [-/]
+    (?P<day>   \d{1,2}) # one or two digit day
+""", re.VERBOSE)
 
-### 4) Practical Checklist
+m = date_pat.fullmatch("2024-07-04")
+print(m.groupdict())  # {'year': '2024', 'month': '07', 'day': '04'}
+```
 
-When implementing this topic in a project, verify:
+### Common Real-World Patterns
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+```python
+import re
 
-### 5) Common Mistakes and Corrections
+# Email (simplified)
+EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+# URL
+URL = re.compile(r"https?://[^\s/$.?#].[^\s]*")
 
-### 6) Debugging Workflow
+# US phone number
+PHONE = re.compile(r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
 
-Follow this process when something breaks:
+# IPv4 address
+IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+# Username: 3–20 alphanumeric + underscore
+USERNAME = re.compile(r"^[a-z0-9_]{3,20}$", re.I)
 
-### 7) Mini Exercises
+# Hashtags
+HASHTAG = re.compile(r"#\w+")
 
-Try these short tasks:
+# Strip HTML tags
+HTML_TAG = re.compile(r"<[^>]+>")
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+# Extract all numbers (int or float)
+NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+```
 
-### 8) Integration Notes
+### Substitution with a Function
 
-This topic is strongest when combined with:
+`re.sub` accepts a callable as the replacement:
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+```python
+import re
 
-### 9) Review Questions
+def redact_digits(m: re.Match) -> str:
+    return "X" * len(m.group())
 
-Use these to self-check understanding:
+print(re.sub(r"\d+", redact_digits, "Order 12345, SKU 99"))
+# Order XXXXX, SKU XX
+```
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+### Named Groups and Back-References
 
-### 10) Progress Rubric
+```python
+import re
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+# Named groups make patterns self-documenting
+log_line = "2024-03-15 ERROR Connection refused"
+pat = re.compile(
+    r"(?P<date>\d{4}-\d{2}-\d{2}) (?P<level>\w+) (?P<message>.+)"
+)
+m = pat.match(log_line)
+if m:
+    print(m.group("level"),   # ERROR
+          m.group("message"))  # Connection refused
 
-### 11) Suggested Practice Routine
+# Back-reference to find repeated words
+doubled = re.search(r"\b(\w+)\s+\1\b", "the the mistake")
+print(doubled.group())   # 'the the'
+```
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+### Compiling for Reuse
 
-### 12) Reference Hygiene
+Always compile patterns used inside loops or called frequently:
 
-To keep this document useful over time:
+```python
+import re
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+# Compile once at module level
+_EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+
+def extract_emails(text: str) -> list[str]:
+    return _EMAIL.findall(text)
+```
+
+### Progress Rubric
+
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Write simple character class and quantifier patterns; use `re.search` and `re.findall` |
+| **Developing** | Use capturing groups, anchors, and `re.sub`; choose `search` vs `match` vs `fullmatch` correctly |
+| **Proficient** | Use named groups, flags, and lookaheads; compile patterns for reuse; avoid catastrophic backtracking |
+| **Advanced** | Write and explain complex multi-group patterns, use `re.VERBOSE`, replace with a callable, parse structured formats |
+
+### Suggested Practice Projects
+
+1. **Log parser** — Extract date, log level, and message from Apache or Python log lines.
+2. **Email extractor** — Find all valid email addresses in a multi-line text file.
+3. **Markdown link finder** — Extract all `[text](url)` pairs from a markdown document.
+4. **Phone normalizer** — Match various phone formats and reformat them all to `+1-XXX-XXX-XXXX`.
+5. **Password validator** — Use `re.fullmatch` with lookaheads to require at least one digit, one uppercase, and minimum 8 characters.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Forgetting raw strings | `"\d"` is the same as `"d"` because `\d` is not a recognized escape | Always use `r"\d+"` |
+| `re.match` vs `re.search` | `match` only checks the start of the string | Use `search` to find anywhere; `fullmatch` for entire string |
+| Greedy vs lazy | `.*` grabs as much as possible and can over-match | Use `.*?` (lazy) inside larger patterns |
+| Catastrophic backtracking | Nested quantifiers like `(a+)+` on long strings cause exponential time | Simplify or use possessive quantifiers / atomic groups |
+| Compiling inside a loop | `re.compile` has overhead; repeated calls in a tight loop are slow | Compile once at module level |
+| `findall` with groups | When the pattern has a capturing group, `findall` returns the group contents, not full matches | Use `(?:...)` for non-capturing groups if you want full matches |
 

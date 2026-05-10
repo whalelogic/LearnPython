@@ -84,154 +84,234 @@ Think of a class as a template for related records plus the operations they supp
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Special Methods (Dunder) Reference
 
-### 1) Learning Goals
+Python calls these automatically. Implementing them makes your objects feel like built-in types.
 
-By the end of this topic, you should be able to:
+| Method | Triggered by | Use case |
+|---|---|---|
+| `__init__(self, ...)` | `MyClass(...)` | Initialize instance state |
+| `__repr__(self)` | `repr(obj)`, REPL display | Unambiguous developer view |
+| `__str__(self)` | `str(obj)`, `print(obj)` | Human-friendly output |
+| `__len__(self)` | `len(obj)` | Return logical size |
+| `__getitem__(self, key)` | `obj[key]` | Index / slice support |
+| `__setitem__(self, key, val)` | `obj[key] = val` | Index assignment |
+| `__contains__(self, item)` | `item in obj` | Membership test |
+| `__iter__(self)` | `for x in obj:` | Return an iterator |
+| `__next__(self)` | `next(obj)` | Advance iterator |
+| `__eq__(self, other)` | `obj == other` | Equality check |
+| `__lt__(self, other)` | `obj < other` | Less-than (enables sorting) |
+| `__hash__(self)` | `hash(obj)`, dict key | Required when `__eq__` defined |
+| `__bool__(self)` | `if obj:` | Truthiness |
+| `__enter__(self)` | `with obj as x:` | Context manager entry |
+| `__exit__(self, exc_type, ...)` | End of `with` block | Context manager cleanup |
+| `__call__(self, ...)` | `obj(...)` | Make instances callable |
+| `__del__(self)` | Garbage collection | Resource cleanup (use carefully) |
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+### `property`, `classmethod`, and `staticmethod`
 
-### 2) Mental Model
+```python
+class Circle:
+    def __init__(self, radius: float) -> None:
+        if radius <= 0:
+            raise ValueError(f"Radius must be positive, got {radius}")
+        self._radius = radius
 
-Use this short mental model while reading examples:
+    # property — computed attribute with validation on set
+    @property
+    def radius(self) -> float:
+        return self._radius
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+    @radius.setter
+    def radius(self, value: float) -> None:
+        if value <= 0:
+            raise ValueError(f"Radius must be positive, got {value}")
+        self._radius = value
 
-If you cannot explain all five parts, pause and simplify the example.
+    @property
+    def area(self) -> float:
+        import math
+        return math.pi * self._radius ** 2
 
-### 3) Terminology Drill
+    # classmethod — alternate constructor
+    @classmethod
+    def unit(cls) -> "Circle":
+        return cls(1.0)
 
-Review these terms and define each in your own words:
+    # staticmethod — utility that belongs near the class but needs no state
+    @staticmethod
+    def is_valid_radius(value: float) -> bool:
+        return value > 0
+```
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+### Inheritance and Composition
 
-A useful habit is to write one sentence per term plus one concrete example.
+**Inheritance** — use when the subclass *is a* specialised version of the parent.
 
-### 4) Practical Checklist
+```python
+class Animal:
+    def __init__(self, name: str) -> None:
+        self.name = name
 
-When implementing this topic in a project, verify:
+    def speak(self) -> str:
+        raise NotImplementedError
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+class Dog(Animal):
+    def speak(self) -> str:
+        return f"{self.name} says woof"
 
-### 5) Common Mistakes and Corrections
+class Cat(Animal):
+    def speak(self) -> str:
+        return f"{self.name} says meow"
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+animals: list[Animal] = [Dog("Rex"), Cat("Luna")]
+for a in animals:
+    print(a.speak())   # polymorphism
+```
 
-### 6) Debugging Workflow
+**Composition** — use when the class *has a* relationship, not *is a*.
 
-Follow this process when something breaks:
+```python
+class Engine:
+    def start(self) -> str:
+        return "engine started"
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+class Car:
+    def __init__(self) -> None:
+        self._engine = Engine()   # composed, not inherited
 
-### 7) Mini Exercises
+    def start(self) -> str:
+        return self._engine.start()
+```
 
-Try these short tasks:
+### Abstract Base Classes
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+Use `abc.ABC` to enforce that subclasses implement required methods.
 
-### 8) Integration Notes
+```python
+from abc import ABC, abstractmethod
 
-This topic is strongest when combined with:
+class Shape(ABC):
+    @abstractmethod
+    def area(self) -> float: ...
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+    @abstractmethod
+    def perimeter(self) -> float: ...
 
-### 9) Review Questions
+    def describe(self) -> str:
+        return f"area={self.area():.2f}, perimeter={self.perimeter():.2f}"
 
-Use these to self-check understanding:
+class Rectangle(Shape):
+    def __init__(self, w: float, h: float) -> None:
+        self.w, self.h = w, h
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+    def area(self) -> float:
+        return self.w * self.h
 
-### 10) Progress Rubric
+    def perimeter(self) -> float:
+        return 2 * (self.w + self.h)
+```
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+Trying to instantiate `Shape()` directly raises `TypeError`.
 
-### 11) Suggested Practice Routine
+### Dataclasses — Minimal Boilerplate Records
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+```python
+from dataclasses import dataclass, field
 
-### 12) Reference Hygiene
+@dataclass(order=True, frozen=False)
+class Point:
+    x: float
+    y: float
+    label: str = ""
+    tags: list[str] = field(default_factory=list)
 
-To keep this document useful over time:
+    def distance_to_origin(self) -> float:
+        return (self.x**2 + self.y**2) ** 0.5
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+p = Point(3.0, 4.0, label="A")
+print(p)                        # Point(x=3.0, y=4.0, label='A', tags=[])
+print(p.distance_to_origin())   # 5.0
+```
+
+`@dataclass` auto-generates `__init__`, `__repr__`, and `__eq__`. Adding `frozen=True` makes the instance immutable (and hashable).
+
+### `__slots__` — Memory Optimization
+
+```python
+class Coordinate:
+    __slots__ = ("x", "y")
+
+    def __init__(self, x: float, y: float) -> None:
+        self.x = x
+        self.y = y
+
+# Coordinate instances use ~30% less memory than normal classes
+# and attribute access is faster; but __dict__ no longer exists
+```
+
+Use `__slots__` when you create millions of small objects.
+
+### Context Managers
+
+```python
+class Timer:
+    import time
+
+    def __enter__(self):
+        self._start = self.time.perf_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.elapsed = self.time.perf_counter() - self._start
+        return False   # do not suppress exceptions
+
+with Timer() as t:
+    result = sum(range(1_000_000))
+print(f"elapsed: {t.elapsed:.4f}s")
+```
+
+Or use `contextlib.contextmanager` for a generator-based approach:
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def managed_resource(name: str):
+    print(f"opening {name}")
+    try:
+        yield name
+    finally:
+        print(f"closing {name}")
+```
+
+### Progress Rubric
+
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Define a class with `__init__`, create instances, add methods |
+| **Developing** | Use `@property`, write `__repr__`/`__str__`, understand inheritance and `super()` |
+| **Proficient** | Use `ABC`, `dataclass`, `__slots__`, and context managers correctly |
+| **Advanced** | Design composable class hierarchies, implement full dunder protocols, reason about MRO |
+
+### Suggested Practice Projects
+
+1. **Stack class** — Implement `push`, `pop`, `peek`, `__len__`, `__bool__`, and `__repr__`.
+2. **Money type** — Build a `Money(amount, currency)` class with `__add__`, `__eq__`, and `__str__`; raise `TypeError` on mismatched currencies.
+3. **Plugin registry** — Use a class-level `dict` and `__init_subclass__` to auto-register subclasses.
+4. **Chainable builder** — Build a query builder where each method returns `self` to allow chaining.
+5. **Context manager** — Write a `TempDirectory` context manager that creates a temp dir on enter and deletes it on exit.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Mutable class attribute | `class Foo: items = []` — all instances share one list | Use `self.items = []` in `__init__` |
+| `__eq__` without `__hash__` | Defining `__eq__` makes the class unhashable by default | Also define `__hash__` or use `@dataclass(frozen=True)` |
+| Forgetting `super().__init__()` | Skipping `super()` leaves the parent uninitialised | Always call `super().__init__(...)` in subclass `__init__` |
+| `isinstance` vs type equality | `type(x) == Dog` fails for subclasses | Use `isinstance(x, Dog)` |
+| `__del__` timing | Python does not guarantee when `__del__` runs | Use context managers instead of `__del__` for cleanup |
+| Deep vs shallow copy | `copy.copy(obj)` only copies one level | Use `copy.deepcopy(obj)` for nested mutable state |
 
