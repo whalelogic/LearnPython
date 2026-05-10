@@ -57,154 +57,237 @@ print(items)
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### `open()` Complete Reference
 
-### 1) Learning Goals
+```python
+open(
+    file,                     # path string or Path object
+    mode='r',                 # see mode table below
+    buffering=-1,             # -1 = system default
+    encoding=None,            # e.g. 'utf-8' for text mode
+    errors=None,              # 'strict', 'replace', 'ignore'
+    newline=None,             # None = universal newlines
+    closefd=True,
+    opener=None,
+)
+```
 
-By the end of this topic, you should be able to:
+#### Mode strings
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+| Mode | Meaning | File must exist? |
+|---|---|---|
+| `r` | Read text (default) | Yes |
+| `w` | Write text, truncate | No |
+| `a` | Append text | No |
+| `x` | Create new file exclusively | No (fails if exists) |
+| `rb` | Read binary | Yes |
+| `wb` | Write binary, truncate | No |
+| `r+` | Read and write text | Yes |
+| `w+` | Write and read, truncate | No |
+| `a+` | Append and read | No |
 
-### 2) Mental Model
+Always specify `encoding="utf-8"` for text mode unless you have a concrete reason not to.
 
-Use this short mental model while reading examples:
+### File Object Method Reference
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+| Method | Description |
+|---|---|
+| `.read(size=-1)` | Read entire file (or `size` bytes/chars) |
+| `.readline()` | Read one line including the trailing `\n` |
+| `.readlines()` | Read all lines into a list |
+| `.write(s)` | Write string and return characters written |
+| `.writelines(lines)` | Write a sequence of strings (no separator added) |
+| `.seek(pos)` | Move file pointer to byte position |
+| `.tell()` | Return current byte position |
+| `.flush()` | Flush write buffer to OS |
+| `.close()` | Close the file (done automatically in `with`) |
+| `.truncate(size=None)` | Shrink file to `size` bytes |
+| Iteration | `for line in f:` — memory-efficient line iteration |
 
-If you cannot explain all five parts, pause and simplify the example.
+### Reading Patterns
 
-### 3) Terminology Drill
+```python
+# Full content (small files only)
+with open("notes.txt", "r", encoding="utf-8") as f:
+    content = f.read()
 
-Review these terms and define each in your own words:
+# Line-by-line — constant memory regardless of file size
+with open("server.log", "r", encoding="utf-8") as f:
+    for line in f:
+        if "ERROR" in line:
+            print(line.rstrip())
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+# Read all lines into a list
+with open("config.ini", "r", encoding="utf-8") as f:
+    lines = f.readlines()    # includes '\n'
+    lines = [l.rstrip() for l in lines]
+```
 
-A useful habit is to write one sentence per term plus one concrete example.
+### Writing Patterns
 
-### 4) Practical Checklist
+```python
+# Plain text
+with open("output.txt", "w", encoding="utf-8") as f:
+    f.write("Hello, world\n")
 
-When implementing this topic in a project, verify:
+# Append without overwriting
+with open("log.txt", "a", encoding="utf-8") as f:
+    f.write("Session started\n")
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+# Write multiple lines at once
+rows = ["Alice,92", "Bob,78", "Cara,88"]
+with open("scores.csv", "w", encoding="utf-8") as f:
+    f.writelines(row + "\n" for row in rows)
+```
 
-### 5) Common Mistakes and Corrections
+### JSON and CSV Patterns
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+```python
+import json
+import csv
 
-### 6) Debugging Workflow
+# --- JSON ---
+data = {"name": "Ava", "score": 91}
 
-Follow this process when something breaks:
+with open("record.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+with open("record.json", "r", encoding="utf-8") as f:
+    loaded = json.load(f)
 
-### 7) Mini Exercises
+# --- CSV (DictWriter / DictReader) ---
+rows = [{"name": "Ava", "score": 91}, {"name": "Ben", "score": 78}]
 
-Try these short tasks:
+with open("scores.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=["name", "score"])
+    writer.writeheader()
+    writer.writerows(rows)
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+with open("scores.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    records = list(reader)  # [{'name': 'Ava', 'score': '91'}, ...]
+```
 
-### 8) Integration Notes
+### `pathlib` — The Modern Path API
 
-This topic is strongest when combined with:
+Prefer `pathlib.Path` for all new path code. It composes naturally and works cross-platform.
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+```python
+from pathlib import Path
 
-### 9) Review Questions
+# Building paths safely
+base = Path("data")
+file = base / "input" / "scores.csv"
 
-Use these to self-check understanding:
+# Common operations
+print(file.name)        # 'scores.csv'
+print(file.stem)        # 'scores'
+print(file.suffix)      # '.csv'
+print(file.parent)      # data/input
+print(file.exists())
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+# Read / write without open()
+Path("notes.txt").write_text("hello\n", encoding="utf-8")
+content = Path("notes.txt").read_text(encoding="utf-8")
 
-### 10) Progress Rubric
+# List files
+for p in Path("data").glob("**/*.csv"):
+    print(p)
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+# Create directories
+Path("output/reports").mkdir(parents=True, exist_ok=True)
+```
 
-### 11) Suggested Practice Routine
+#### `pathlib.Path` Method Reference
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+| Method / Property | Purpose |
+|---|---|
+| `Path(str)` | Create a path object |
+| `p / "subdir"` | Join path segments |
+| `p.name` | Filename including extension |
+| `p.stem` | Filename without extension |
+| `p.suffix` | Extension including dot |
+| `p.parent` | Parent directory |
+| `p.parts` | Tuple of all path components |
+| `p.exists()` | Whether path exists |
+| `p.is_file()` / `p.is_dir()` | Type check |
+| `p.stat()` | Size, mtime, permissions |
+| `p.read_text(encoding=)` | Read entire file as string |
+| `p.write_text(s, encoding=)` | Write string to file |
+| `p.read_bytes()` | Read binary content |
+| `p.write_bytes(b)` | Write bytes to file |
+| `p.mkdir(parents=, exist_ok=)` | Create directory |
+| `p.unlink(missing_ok=)` | Delete file |
+| `p.rename(target)` | Rename / move |
+| `p.glob(pattern)` | Iterator of matching paths |
+| `p.rglob(pattern)` | Recursive glob |
+| `p.resolve()` | Absolute path |
 
-### 12) Reference Hygiene
+### Error Handling Patterns
 
-To keep this document useful over time:
+```python
+from pathlib import Path
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+def safe_read(path: str) -> str | None:
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        print(f"File not found: {path}")
+        return None
+    except PermissionError:
+        print(f"No permission to read: {path}")
+        return None
+    except UnicodeDecodeError:
+        print(f"Not valid UTF-8: {path}")
+        return None
+```
+
+### Binary File Patterns
+
+```python
+# Read binary exactly
+with open("image.png", "rb") as f:
+    header = f.read(8)       # first 8 bytes
+    rest   = f.read()        # everything else
+
+# Write binary
+with open("copy.png", "wb") as f:
+    f.write(header + rest)
+
+# Stream large binary file in chunks
+CHUNK = 65_536  # 64 KiB
+with open("large.bin", "rb") as src, open("out.bin", "wb") as dst:
+    while chunk := src.read(CHUNK):
+        dst.write(chunk)
+```
+
+### Progress Rubric
+
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Open, read, and write text files using `with`; specify `encoding="utf-8"` |
+| **Developing** | Stream files line-by-line, use `json` and `csv` modules, use `pathlib.Path` for paths |
+| **Proficient** | Handle all common I/O exceptions, read/write binary, list files with `glob` |
+| **Advanced** | Stream large files in chunks, use `seek`/`tell` for random access, compose `pathlib` and `shutil` for file-system operations |
+
+### Suggested Practice Projects
+
+1. **Log analyzer** — Stream a large log file line by line, count occurrences of each log level, and print a summary.
+2. **CSV merger** — Read multiple CSV files from a directory, combine all rows, deduplicate by ID, and write a single output file.
+3. **Config reader** — Parse a `key=value` config file into a dict, with defaults for missing keys.
+4. **File backup tool** — Copy files matching a glob pattern to a timestamped backup directory using `pathlib` and `shutil.copy2`.
+5. **JSON log rotator** — Append structured JSON records to a log file, and when it exceeds 1 MB, rotate it to `log.1.json`.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Missing `encoding` | Default encoding is platform-dependent (`cp1252` on Windows) | Always pass `encoding="utf-8"` |
+| `w` mode deletes content | Opening an existing file in `w` truncates it immediately | Use `a` to append or `r+` to update |
+| Forgetting `newline=""` with `csv` | Extra blank lines appear in CSV output on Windows | Pass `newline=""` to `open()` when using `csv` |
+| Reading huge files with `.read()` | Loads entire file into memory | Iterate line-by-line or read in chunks |
+| File not closed on exception | Without `with`, an exception leaks the file handle | Always use `with open(...) as f:` |
+| String vs bytes mode | Writing a `str` to a binary file raises `TypeError` | Match your mode (`r`/`w` for text, `rb`/`wb` for bytes) |
 

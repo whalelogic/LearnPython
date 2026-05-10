@@ -45,154 +45,186 @@ Keras keeps the training workflow compact:
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Keras Workflow at a Glance
 
-### 1) Learning Goals
+Every Keras model follows the same four-step pattern. Understand each step before customizing any of them.
 
-By the end of this topic, you should be able to:
+```
+Define layers → compile → fit → evaluate / predict
+```
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+```python
+import keras
+from keras import layers
+import numpy as np
 
-### 2) Mental Model
+# 1. Define layers
+model = keras.Sequential([
+    layers.Input(shape=(20,)),
+    layers.Dense(64, activation="relu"),
+    layers.Dropout(0.3),
+    layers.Dense(32, activation="relu"),
+    layers.Dense(1, activation="sigmoid"),  # binary output
+])
 
-Use this short mental model while reading examples:
+# 2. Compile — pick optimizer, loss, and metrics
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+    loss="binary_crossentropy",
+    metrics=["accuracy"],
+)
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+# 3. Train
+X_train = np.random.rand(1000, 20).astype("float32")
+y_train = np.random.randint(0, 2, size=(1000,)).astype("float32")
 
-If you cannot explain all five parts, pause and simplify the example.
+history = model.fit(
+    X_train, y_train,
+    epochs=10,
+    batch_size=32,
+    validation_split=0.2,
+    verbose=1,
+)
 
-### 3) Terminology Drill
+# 4. Evaluate and predict
+X_test = np.random.rand(200, 20).astype("float32")
+y_test = np.random.randint(0, 2, size=(200,)).astype("float32")
+loss, acc = model.evaluate(X_test, y_test)
+preds = model.predict(X_test)   # probabilities
+```
 
-Review these terms and define each in your own words:
+### Layer Types Quick-Reference
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+| Layer | Purpose | Key arguments |
+|---|---|---|
+| `Dense(units, activation=)` | Fully connected layer | `units`, `activation`, `kernel_regularizer` |
+| `Conv2D(filters, kernel_size, activation=)` | 2-D convolution for images | `filters`, `kernel_size`, `strides`, `padding` |
+| `MaxPooling2D(pool_size=)` | Spatial downsampling | `pool_size`, `strides` |
+| `LSTM(units, return_sequences=)` | Long short-term memory for sequences | `units`, `return_sequences`, `dropout` |
+| `GRU(units)` | Gated recurrent unit (lighter than LSTM) | `units`, `return_sequences` |
+| `Embedding(vocab_size, embed_dim)` | Integer tokens → dense vectors | `input_dim`, `output_dim`, `mask_zero` |
+| `Flatten()` | Collapse spatial dims to 1-D | — |
+| `Dropout(rate)` | Zero random fraction of activations during training | `rate` (0–1) |
+| `BatchNormalization()` | Normalize activations per batch | `momentum`, `epsilon` |
+| `GlobalAveragePooling2D()` | Average each feature map to one value | — |
 
-A useful habit is to write one sentence per term plus one concrete example.
+### Loss Functions Reference
 
-### 4) Practical Checklist
+| Task | Loss function | Output activation |
+|---|---|---|
+| Binary classification | `binary_crossentropy` | `sigmoid` |
+| Multi-class (one label) | `sparse_categorical_crossentropy` | `softmax` |
+| Multi-class (one-hot labels) | `categorical_crossentropy` | `softmax` |
+| Multi-label classification | `binary_crossentropy` | `sigmoid` |
+| Regression | `mean_squared_error` | None (linear) |
+| Regression (outlier-robust) | `huber` | None (linear) |
 
-When implementing this topic in a project, verify:
+### Optimizer Quick-Reference
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+| Optimizer | When to use |
+|---|---|
+| `Adam(lr=1e-3)` | Good default for most tasks |
+| `SGD(lr=0.01, momentum=0.9)` | Better generalization with tuned schedule |
+| `RMSprop(lr=1e-3)` | Recurrent networks |
+| `AdamW(lr=1e-3, weight_decay=1e-4)` | Adam with L2 regularization built in |
 
-### 5) Common Mistakes and Corrections
+### Callbacks
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+Callbacks hook into the training loop to add behavior without changing `fit()`.
 
-### 6) Debugging Workflow
+```python
+callbacks = [
+    # Stop early when val_loss stops improving
+    keras.callbacks.EarlyStopping(
+        monitor="val_loss", patience=3, restore_best_weights=True
+    ),
+    # Save the best checkpoint
+    keras.callbacks.ModelCheckpoint(
+        "best_model.keras", monitor="val_loss", save_best_only=True
+    ),
+    # Reduce LR when plateau
+    keras.callbacks.ReduceLROnPlateau(
+        monitor="val_loss", factor=0.5, patience=2
+    ),
+]
 
-Follow this process when something breaks:
+history = model.fit(X_train, y_train, epochs=50, callbacks=callbacks)
+```
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+### Functional API — Multi-Input / Multi-Output Models
 
-### 7) Mini Exercises
+Use the functional API when you need shared layers, skip connections, or multiple inputs.
 
-Try these short tasks:
+```python
+# Shared embedding for two text inputs
+input_a = keras.Input(shape=(100,), name="text_a")
+input_b = keras.Input(shape=(100,), name="text_b")
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+shared = layers.Embedding(10000, 64)
+a = shared(input_a)
+b = shared(input_b)
 
-### 8) Integration Notes
+merged = layers.Concatenate()([a, b])
+flat = layers.Flatten()(merged)
+out = layers.Dense(1, activation="sigmoid")(flat)
 
-This topic is strongest when combined with:
+model = keras.Model(inputs=[input_a, input_b], outputs=out)
+```
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+### Saving and Loading
 
-### 9) Review Questions
+```python
+# Recommended: native Keras format
+model.save("my_model.keras")
+loaded = keras.models.load_model("my_model.keras")
 
-Use these to self-check understanding:
+# Weights only (architecture defined separately)
+model.save_weights("weights.h5")
+model.load_weights("weights.h5")
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+# Export for TensorFlow Serving or TFLite
+model.export("saved_model_dir")
+```
 
-### 10) Progress Rubric
+### Inspecting Training History
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+```python
+import matplotlib.pyplot as plt
 
-### 11) Suggested Practice Routine
+plt.plot(history.history["loss"],     label="train loss")
+plt.plot(history.history["val_loss"], label="val loss")
+plt.legend()
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.show()
+```
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+### Progress Rubric
 
-### 12) Reference Hygiene
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Build a `Sequential` model, compile, call `fit` and `evaluate` |
+| **Developing** | Choose correct loss/activation pair, add `Dropout`/`BatchNorm`, read training history |
+| **Proficient** | Use callbacks for early stopping, use the functional API, save and reload models |
+| **Advanced** | Write custom layers and losses, design multi-input architectures, tune hyperparameters systematically |
 
-To keep this document useful over time:
+### Suggested Practice Projects
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+1. **Binary classifier** — Classify tabular data (e.g., UCI Heart Disease) with a `Sequential` model; tune depth and dropout.
+2. **Image classifier** — Build a CNN for MNIST or CIFAR-10 using `Conv2D`, `MaxPooling2D`, and `Flatten`.
+3. **Sentiment analysis** — Use `Embedding` + `LSTM` on the IMDB dataset bundled in `keras.datasets`.
+4. **Regression** — Predict a continuous target (e.g., Boston housing) and compare MSE vs Huber loss.
+5. **Transfer learning** — Load `keras.applications.MobileNetV2`, freeze base layers, attach a new head, fine-tune.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Wrong activation for loss | Using `relu` output with `binary_crossentropy` gives garbage | Match activation to loss as shown in the table above |
+| Forgetting `validation_split` | Training loss looks great but you have no signal on generalization | Always pass `validation_split` or a validation set |
+| Input shape mismatch | First `Dense` infers shape from data; adding `Input(shape=)` makes errors earlier | Declare an explicit `Input` layer |
+| `predict` returns probabilities | For classification, `predict` gives probabilities, not class labels | Apply `(preds > 0.5).astype(int)` or `np.argmax(preds, axis=1)` |
+| Training on GPU but saving floats | Mixed-precision training can cause weight dtype issues | Set policy explicitly with `keras.mixed_precision.set_global_policy` |
 

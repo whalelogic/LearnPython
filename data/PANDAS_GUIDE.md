@@ -67,154 +67,191 @@ Pandas shines when your data has column names and mixed types. CSV exports, spre
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### DataFrame and Series Mental Model
 
-### 1) Learning Goals
+A `DataFrame` is a dictionary of equal-length `Series`. Each `Series` is a labeled 1-D array backed by NumPy. Operations on columns are vectorized; row-wise `apply` is a last resort.
 
-By the end of this topic, you should be able to:
+```python
+import pandas as pd
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+df = pd.DataFrame({
+    "name":    ["Ava", "Ben", "Cara"],
+    "score":   [91, 78, 88],
+    "passed":  [True, False, True],
+})
 
-### 2) Mental Model
+# Series — one column
+print(df["score"])          # 0    91 / 1    78 / 2    88
+print(type(df["score"]))    # <class 'pandas.core.series.Series'>
 
-Use this short mental model while reading examples:
+# Scalar access — fastest for single cells
+print(df.at[0, "name"])     # Ava
+print(df.iat[0, 1])         # 91
+```
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+### Loading and Saving
 
-If you cannot explain all five parts, pause and simplify the example.
+| Format | Read | Write |
+|---|---|---|
+| CSV | `pd.read_csv("f.csv")` | `df.to_csv("f.csv", index=False)` |
+| JSON | `pd.read_json("f.json")` | `df.to_json("f.json", orient="records")` |
+| Excel | `pd.read_excel("f.xlsx", sheet_name=0)` | `df.to_excel("f.xlsx", index=False)` |
+| Parquet | `pd.read_parquet("f.parquet")` | `df.to_parquet("f.parquet")` |
+| SQL | `pd.read_sql(query, engine)` | `df.to_sql("table", engine, if_exists="replace")` |
+| Clipboard | `pd.read_clipboard()` | `df.to_clipboard()` |
 
-### 3) Terminology Drill
+```python
+# Read with type hints and date parsing
+df = pd.read_csv(
+    "orders.csv",
+    dtype={"order_id": int, "amount": float},
+    parse_dates=["created_at"],
+)
+```
 
-Review these terms and define each in your own words:
+### Selection Patterns
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+```python
+# Column selection
+df["revenue"]                        # Series
+df[["region", "revenue"]]            # DataFrame
 
-A useful habit is to write one sentence per term plus one concrete example.
+# Row filtering — boolean mask
+df[df["revenue"] > 1000]
+df[(df["revenue"] > 500) & (df["region"] == "North")]
 
-### 4) Practical Checklist
+# Label-based — loc
+df.loc[0:4, "revenue":"orders"]      # rows 0–4, columns revenue through orders
+df.loc[df["revenue"] > 500, "region"]
 
-When implementing this topic in a project, verify:
+# Integer-position — iloc
+df.iloc[0:3, 1:3]                    # first 3 rows, columns 1 and 2
+df.iloc[-1, :]                       # last row
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+# Query string (readable for complex filters)
+df.query("revenue > 1000 and region == 'North'")
+```
 
-### 5) Common Mistakes and Corrections
+### Inspection Quick-Reference
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+| Method / Attribute | Purpose |
+|---|---|
+| `df.head(n)` / `df.tail(n)` | First / last `n` rows |
+| `df.info()` | Column names, dtypes, null counts |
+| `df.describe()` | Count, mean, std, quartiles for numeric columns |
+| `df.shape` | `(rows, columns)` tuple |
+| `df.dtypes` | Per-column dtype |
+| `df.isnull().sum()` | Null count per column |
+| `df["col"].value_counts()` | Frequency table |
+| `df["col"].nunique()` | Count of distinct values |
+| `df.sample(n)` | Random sample of `n` rows |
+| `df.memory_usage(deep=True)` | Memory per column in bytes |
 
-### 6) Debugging Workflow
+### Transformation Quick-Reference
 
-Follow this process when something breaks:
+| Operation | Method / pattern |
+|---|---|
+| Add a column | `df["new"] = df["a"] + df["b"]` or `df.assign(new=...)` |
+| Rename columns | `df.rename(columns={"old": "new"})` |
+| Drop columns | `df.drop(columns=["col"])` |
+| Cast type | `df.astype({"col": int})` |
+| Fill nulls | `df["col"].fillna(0)` / `df.fillna(df.mean(numeric_only=True))` |
+| Drop null rows | `df.dropna(subset=["col"])` |
+| Parse dates | `pd.to_datetime(df["date"])` |
+| String ops | `df["name"].str.lower()` / `.str.contains("pat")` |
+| Apply function | `df["col"].apply(fn)` (element-wise) |
+| Map values | `df["status"].map({"Y": True, "N": False})` |
+| Replace values | `df.replace({"old": "new"})` |
+| Reset index | `df.reset_index(drop=True)` |
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+### Aggregation and GroupBy
 
-### 7) Mini Exercises
+```python
+# Simple aggregation
+df.groupby("region")["revenue"].sum()
+df.groupby("region")["revenue"].agg(["sum", "mean", "count"])
 
-Try these short tasks:
+# Multiple aggregations with named outputs
+summary = df.groupby("region").agg(
+    total_revenue=("revenue", "sum"),
+    avg_orders=("orders", "mean"),
+    num_rows=("revenue", "count"),
+)
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+# Pivot table
+df.pivot_table(
+    values="revenue",
+    index="region",
+    columns="quarter",
+    aggfunc="sum",
+    fill_value=0,
+)
+```
 
-### 8) Integration Notes
+### Merging and Combining
 
-This topic is strongest when combined with:
+| Function | Use case |
+|---|---|
+| `pd.merge(df1, df2, on="id")` | Inner join on common column |
+| `pd.merge(..., how="left")` | Left join — keep all rows from left |
+| `pd.merge(..., how="outer")` | Outer join — keep all rows from both |
+| `pd.concat([df1, df2])` | Stack rows (append) |
+| `pd.concat([df1, df2], axis=1)` | Stack columns side by side |
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+```python
+customers = pd.DataFrame({"id": [1, 2], "name": ["Ava", "Ben"]})
+orders    = pd.DataFrame({"id": [1, 1, 2], "amount": [100, 200, 50]})
 
-### 9) Review Questions
+merged = pd.merge(customers, orders, on="id", how="left")
+print(merged.groupby("name")["amount"].sum())
+```
 
-Use these to self-check understanding:
+### Data Cleaning Patterns
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+```python
+# Audit nulls
+print(df.isnull().sum())
+print(df.isnull().mean() * 100)   # percentage per column
 
-### 10) Progress Rubric
+# Fill numeric columns with median
+num_cols = df.select_dtypes("number").columns
+df[num_cols] = df[num_cols].fillna(df[num_cols].median())
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+# Remove duplicate rows
+df = df.drop_duplicates(subset=["order_id"])
 
-### 11) Suggested Practice Routine
+# Strip whitespace from all string columns
+str_cols = df.select_dtypes("object").columns
+df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
+```
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+### Progress Rubric
 
-### 12) Reference Hygiene
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Load a CSV, inspect with `head()` / `info()`, select and filter columns |
+| **Developing** | Add computed columns, use `groupby`, handle nulls |
+| **Proficient** | Merge tables, parse dates, use `loc`/`iloc` correctly, avoid chained assignment |
+| **Advanced** | Optimize dtypes for memory, build reusable cleaning pipelines, use vectorized string ops |
 
-To keep this document useful over time:
+### Suggested Practice Projects
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+1. **Sales summary** — Load a CSV with region/product/revenue, group by region, compute totals, export to a new CSV.
+2. **Missing-value audit** — Find columns with nulls, fill numeric ones with median, drop rows where key columns are null.
+3. **Date analysis** — Parse a datetime column, extract year and month, group by month to find a revenue trend.
+4. **Join exercise** — Merge an orders table and a customers table on ID, then compute per-customer totals.
+5. **Full pipeline** — Read raw data → clean nulls and types → filter → aggregate → export.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Chained assignment | `df[mask]["col"] = x` silently fails (SettingWithCopyWarning) | Use `df.loc[mask, "col"] = x` |
+| Default `object` dtype | Mixed types or strings default to `object` — slow and large | Cast explicitly with `astype` |
+| `apply` on rows is slow | Row-wise `apply(fn, axis=1)` is a Python loop in disguise | Use vectorized column math instead |
+| Index misalignment | After filtering, the index retains original row numbers | Call `.reset_index(drop=True)` when positional access is needed |
+| `inplace=True` | Returns `None`; easy to accidentally discard the result | Prefer `df = df.rename(...)` reassignment |
+| Date comparison | Comparing strings to `datetime` silently returns `False` | Convert with `pd.to_datetime` before filtering |
 

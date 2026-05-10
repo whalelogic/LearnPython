@@ -52,154 +52,208 @@ Built-ins usually work best together with standard-library modules. For example,
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Complete Built-in Function Table
 
-### 1) Learning Goals
+| Function | Category | Short description |
+|---|---|---|
+| `abs(x)` | Numeric | Absolute value |
+| `all(iterable)` | Iteration | `True` if every element is truthy (vacuously true for empty) |
+| `any(iterable)` | Iteration | `True` if at least one element is truthy |
+| `ascii(obj)` | Representation | Like `repr` but escapes non-ASCII characters |
+| `bin(x)` | Numeric | Binary string e.g. `'0b1010'` |
+| `bool(x)` | Type conversion | Convert to `True` or `False` |
+| `breakpoint()` | Debugging | Drop into `pdb` (or `PYTHONBREAKPOINT` override) |
+| `bytearray(...)` | Type conversion | Mutable bytes sequence |
+| `bytes(...)` | Type conversion | Immutable bytes sequence |
+| `callable(obj)` | Introspection | Whether object can be called |
+| `chr(i)` | Representation | Character for Unicode code point |
+| `classmethod(fn)` | OOP | Class-bound method descriptor |
+| `compile(src, file, mode)` | Execution | Compile source to code object |
+| `complex(...)` | Type conversion | Create complex number |
+| `delattr(obj, name)` | Attribute ops | Delete named attribute |
+| `dict(...)` | Type conversion | Create dictionary |
+| `dir(obj)` | Introspection | List attributes |
+| `divmod(a, b)` | Numeric | `(a // b, a % b)` in one call |
+| `enumerate(iter, start=0)` | Iteration | `(index, value)` pairs |
+| `eval(expr)` | Execution | Evaluate expression string |
+| `exec(code)` | Execution | Execute statements |
+| `filter(fn, iter)` | Iteration | Keep elements where predicate is truthy |
+| `float(x)` | Type conversion | Convert to float |
+| `format(value, spec='')` | Representation | Format using mini-language spec |
+| `frozenset(iter)` | Type conversion | Immutable set |
+| `getattr(obj, name[, default])` | Attribute ops | Read attribute dynamically |
+| `globals()` | Introspection | Global namespace dict |
+| `hasattr(obj, name)` | Introspection | Check attribute existence |
+| `hash(obj)` | Introspection | Hash value (must be hashable) |
+| `help(obj)` | Introspection | Interactive help |
+| `hex(x)` | Numeric | Hex string e.g. `'0xff'` |
+| `id(obj)` | Introspection | Identity (memory address) |
+| `input(prompt='')` | I/O | Read a line from stdin |
+| `int(x=0, base=10)` | Type conversion | Convert to integer |
+| `isinstance(obj, classinfo)` | Introspection | Runtime type check (supports tuple of types) |
+| `issubclass(cls, classinfo)` | Introspection | Subclass relationship check |
+| `iter(obj[, sentinel])` | Iteration | Get iterator from iterable or callable |
+| `len(obj)` | Sequence | Number of items |
+| `list(iter)` | Type conversion | Create list |
+| `locals()` | Introspection | Local namespace dict |
+| `map(fn, *iters)` | Iteration | Apply function element-wise |
+| `max(*args or iter, key=, default=)` | Numeric | Largest item |
+| `memoryview(obj)` | Type conversion | Zero-copy buffer view |
+| `min(*args or iter, key=, default=)` | Numeric | Smallest item |
+| `next(iter[, default])` | Iteration | Next element from iterator |
+| `object()` | OOP | Base object instance |
+| `oct(x)` | Numeric | Octal string e.g. `'0o17'` |
+| `open(file, mode='r', ...)` | I/O | Open file |
+| `ord(c)` | Representation | Unicode code point for one-char string |
+| `pow(x, y[, mod])` | Numeric | Exponentiation; `pow(x,y,mod)` is modular |
+| `print(*args, sep=' ', end='\n', file=, flush=)` | I/O | Print values |
+| `property(fget, fset, fdel, doc)` | OOP | Managed attribute descriptor |
+| `range(stop)` / `range(start, stop, step)` | Iteration | Arithmetic integer sequence |
+| `repr(obj)` | Representation | Developer-oriented string |
+| `reversed(seq)` | Iteration | Reverse iterator |
+| `round(number[, ndigits])` | Numeric | Rounded value (banker's rounding) |
+| `set(iter)` | Type conversion | Create set |
+| `setattr(obj, name, value)` | Attribute ops | Set attribute dynamically |
+| `slice(stop)` / `slice(start, stop, step)` | Sequence | Slice object |
+| `sorted(iter, key=None, reverse=False)` | Iteration | New sorted list |
+| `staticmethod(fn)` | OOP | Static method descriptor |
+| `str(obj='')` | Type conversion | Convert to string |
+| `sum(iter, start=0)` | Numeric | Sum values |
+| `super([type[, obj]])` | OOP | Proxy to parent class |
+| `tuple(iter)` | Type conversion | Create tuple |
+| `type(obj)` / `type(name, bases, ns)` | Introspection / OOP | Inspect or create type |
+| `vars([obj])` | Introspection | `__dict__` of object |
+| `zip(*iters, strict=False)` | Iteration | Combine iterables element-wise |
+| `__import__(name, ...)` | Execution | Low-level import |
 
-By the end of this topic, you should be able to:
+### Function Families by Task
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+| Task | Best built-ins |
+|---|---|
+| Convert user input | `int`, `float`, `bool`, `str`, `list`, `tuple`, `set`, `dict` |
+| Iterate with index | `enumerate` |
+| Pair multiple sequences | `zip` (add `strict=True` to catch length mismatches) |
+| Filter and transform | `filter`, `map`, or list/generator comprehensions |
+| Boolean checks | `all`, `any` |
+| Sorting | `sorted(key=...)`, `min(key=...)`, `max(key=...)` |
+| Aggregation | `sum`, `min`, `max`, `len` |
+| File I/O | `open` inside a `with` block |
+| Inspect unknown objects | `type`, `isinstance`, `dir`, `vars`, `hasattr`, `callable` |
+| Dynamic attribute access | `getattr`, `setattr`, `delattr` |
+| Format output | `print`, `format`, `repr`, `str`, `chr`, `ord` |
+| Number bases | `bin`, `oct`, `hex` |
 
-### 2) Mental Model
+### Annotated Patterns
 
-Use this short mental model while reading examples:
+#### Validate all/any conditions
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+```python
+def validate_user(user: dict) -> bool:
+    return all([
+        isinstance(user.get("username"), str),
+        len(user.get("username", "")) >= 3,
+        "@" in user.get("email", ""),
+        any(ch.isdigit() for ch in user.get("password", "")),
+    ])
+```
 
-If you cannot explain all five parts, pause and simplify the example.
+#### Sort complex data
 
-### 3) Terminology Drill
+```python
+products = [
+    {"name": "Laptop", "price": 1200, "rating": 4.8},
+    {"name": "Mouse",  "price": 25,   "rating": 4.3},
+]
 
-Review these terms and define each in your own words:
+cheapest    = min(products, key=lambda p: p["price"])
+best_rated  = max(products, key=lambda p: p["rating"])
+by_price    = sorted(products, key=lambda p: p["price"])
+```
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+#### Lazy pipeline with `map` and `filter`
 
-A useful habit is to write one sentence per term plus one concrete example.
+```python
+records = [{"name": "Ava", "active": True, "score": 91},
+           {"name": "Noah", "active": False, "score": 77}]
 
-### 4) Practical Checklist
+active_scores = list(map(
+    lambda r: r["score"],
+    filter(lambda r: r["active"], records)
+))
+# Equivalent comprehension (often preferred):
+active_scores = [r["score"] for r in records if r["active"]]
+```
 
-When implementing this topic in a project, verify:
+#### Safe iterator consumption
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+```python
+it = iter([10, 20, 30])
+print(next(it))          # 10
+print(next(it, "DONE"))  # 20
+print(next(it, "DONE"))  # 30
+print(next(it, "DONE"))  # DONE  — no StopIteration
+```
 
-### 5) Common Mistakes and Corrections
+#### `zip` with strict length enforcement
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+```python
+headers = ["id", "name", "age"]
+row     = [101, "Ava", 30]
+record  = dict(zip(headers, row, strict=True))
+# strict=True raises ValueError if lengths differ
+```
 
-### 6) Debugging Workflow
+#### Dynamic attribute access pattern
 
-Follow this process when something breaks:
+```python
+class Config:
+    timeout = 30
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+cfg = Config()
+for key in ("timeout", "retries", "debug"):
+    print(key, getattr(cfg, key, None))   # no AttributeError
+```
 
-### 7) Mini Exercises
+### `open()` Modes Reference
 
-Try these short tasks:
+| Mode | Meaning |
+|---|---|
+| `r` | Read text (default) |
+| `w` | Write text, truncate existing |
+| `a` | Append text |
+| `x` | Create new file; fail if exists |
+| `b` | Binary modifier (combine with above) |
+| `t` | Text modifier (default) |
+| `+` | Update (read + write) |
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+### Subtle Behaviors
 
-### 8) Integration Notes
+| Function | Gotcha | Fix |
+|---|---|---|
+| `bool("False")` | Any non-empty string is truthy | Parse explicitly: `s.lower() == "true"` |
+| `round(2.675, 2)` | Floating-point surprises; may return `2.67` | Use `decimal.Decimal` for money |
+| `max([])` | Raises `ValueError` on empty input | Use `default=` keyword |
+| `zip(a, b)` | Silently stops at shortest | Add `strict=True` to catch mismatches |
+| `sum` on strings | `TypeError` — not supported | Use `"".join(strings)` |
+| `eval` / `exec` | Security risk on untrusted input | Avoid; use `json.loads` or `ast.literal_eval` |
+| `sorted` returns a list | Does not sort the original | Use `.sort()` to sort in place |
 
-This topic is strongest when combined with:
+### Progress Rubric
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Convert types, iterate with `range` and `enumerate`, use `print` and `len` |
+| **Developing** | Use `zip`, `sorted(key=)`, `map`, `filter`, `all`, `any` in real problems |
+| **Proficient** | Apply `min`/`max` with keys, use introspection tools, handle `iter`/`next` protocol |
+| **Advanced** | Replace loops with built-in pipelines, use `getattr`/`setattr` in dynamic code, understand `property` and descriptor protocol |
 
-### 9) Review Questions
+### Suggested Practice Projects
 
-Use these to self-check understanding:
-
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
-
-### 10) Progress Rubric
-
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
-
-### 11) Suggested Practice Routine
-
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
-
-### 12) Reference Hygiene
-
-To keep this document useful over time:
-
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+1. **Data normalizer** — Read a list of dicts, validate all required fields with `all`/`any`, sort by a field, and print a formatted report.
+2. **Type converter** — Accept a string from input and convert to int/float/bool with proper error handling.
+3. **Record merger** — Use `zip(strict=True)` to combine two lists of equal length into a list of dicts.
+4. **Object inspector** — Write a function using `dir`, `getattr`, `callable`, and `isinstance` to print a human-readable summary of any object.
+5. **Custom sort** — Sort a list of tuples by the second element descending, then by the first element ascending.
 

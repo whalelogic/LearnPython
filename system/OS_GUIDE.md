@@ -48,154 +48,205 @@ if path.exists():
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### `os` Module Function Reference
 
-### 1) Learning Goals
+#### Paths and directories
 
-By the end of this topic, you should be able to:
+| Function | Description |
+|---|---|
+| `os.getcwd()` | Current working directory as a string |
+| `os.chdir(path)` | Change working directory |
+| `os.listdir(path='.')` | List names in a directory |
+| `os.scandir(path='.')` | Iterator of `DirEntry` objects with stat info |
+| `os.makedirs(path, exist_ok=False)` | Create directory tree |
+| `os.removedirs(path)` | Remove empty directory tree |
+| `os.rename(src, dst)` | Rename / move a file or directory |
+| `os.replace(src, dst)` | Rename, atomically replacing destination |
+| `os.remove(path)` | Delete a file |
+| `os.rmdir(path)` | Remove an empty directory |
+| `os.stat(path)` | File metadata: size, mtime, permissions |
+| `os.walk(top)` | Recursive directory tree generator |
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+#### Path operations (`os.path`)
 
-### 2) Mental Model
+| Function | Description |
+|---|---|
+| `os.path.join(a, b, ...)` | Join path components (OS-appropriate separator) |
+| `os.path.split(path)` | `(head, tail)` tuple |
+| `os.path.splitext(path)` | `(root, ext)` tuple |
+| `os.path.basename(path)` | Filename component |
+| `os.path.dirname(path)` | Directory component |
+| `os.path.exists(path)` | Whether path exists |
+| `os.path.isfile(path)` | Whether path is a regular file |
+| `os.path.isdir(path)` | Whether path is a directory |
+| `os.path.abspath(path)` | Absolute path |
+| `os.path.expanduser(path)` | Expand `~` to home directory |
+| `os.path.getsize(path)` | File size in bytes |
 
-Use this short mental model while reading examples:
+#### Environment variables
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+| Function | Description |
+|---|---|
+| `os.getenv(key, default=None)` | Read env var, with optional default |
+| `os.environ[key]` | Read env var; raises `KeyError` if missing |
+| `os.environ.get(key, default)` | Safe read with default |
+| `os.environ[key] = value` | Set env var for this process |
+| `os.environ.pop(key, None)` | Remove env var |
+| `dict(os.environ)` | Snapshot of all env vars |
 
-If you cannot explain all five parts, pause and simplify the example.
+#### Process information
 
-### 3) Terminology Drill
+| Function | Description |
+|---|---|
+| `os.getpid()` | Current process ID |
+| `os.getppid()` | Parent process ID |
+| `os.cpu_count()` | Logical CPU count |
+| `os.urandom(n)` | Cryptographically random `n` bytes |
+| `os.sep` | Path separator (`/` on Unix, `\\` on Windows) |
+| `os.linesep` | Line ending for current OS |
+| `os.name` | `'posix'` on Unix/macOS, `'nt'` on Windows |
 
-Review these terms and define each in your own words:
+### `os` vs `pathlib` — When to Use Each
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+| Task | Prefer `os` | Prefer `pathlib` |
+|---|---|---|
+| Environment variables | `os.getenv` | — |
+| Process info | `os.getpid`, `os.cpu_count` | — |
+| Interop with libraries that take strings | `str(path)` | — |
+| Path building | — | `Path("a") / "b"` |
+| Reading / writing files | — | `.read_text()`, `.write_text()` |
+| Recursive glob | — | `.rglob("*.py")` |
+| Existence / type checks | — | `.exists()`, `.is_file()` |
+| Directory creation | — | `.mkdir(parents=True, exist_ok=True)` |
 
-A useful habit is to write one sentence per term plus one concrete example.
+Use `pathlib.Path` for new path code; use `os` when you need environment variables, process details, or must produce plain strings for external APIs.
 
-### 4) Practical Checklist
+### `os.walk` — Recursive Tree Traversal
 
-When implementing this topic in a project, verify:
+```python
+import os
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+for root, dirs, files in os.walk("src"):
+    # root  — current directory as a string
+    # dirs  — list of subdirectory names (can modify to prune)
+    # files — list of file names in root
+    for name in files:
+        if name.endswith(".py"):
+            full = os.path.join(root, name)
+            print(full)
 
-### 5) Common Mistakes and Corrections
+# Skip hidden directories
+for root, dirs, files in os.walk("project"):
+    dirs[:] = [d for d in dirs if not d.startswith(".")]
+    for f in files:
+        print(os.path.join(root, f))
+```
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+### `os.scandir` — Efficient Directory Listing
 
-### 6) Debugging Workflow
+`scandir` avoids extra `stat` calls compared to `listdir + stat`:
 
-Follow this process when something breaks:
+```python
+import os
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+with os.scandir("data") as it:
+    for entry in it:
+        if entry.is_file() and entry.name.endswith(".csv"):
+            info = entry.stat()
+            print(f"{entry.name:30s}  {info.st_size:>10,} bytes")
+```
 
-### 7) Mini Exercises
+### Environment Variables Patterns
 
-Try these short tasks:
+```python
+import os
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+# Safe read with typed defaults
+debug  = os.getenv("DEBUG", "false").lower() == "true"
+port   = int(os.getenv("PORT", "8080"))
+db_url = os.environ["DATABASE_URL"]   # intentionally fail if missing
 
-### 8) Integration Notes
+# Guard against missing required vars at startup
+required = ["DATABASE_URL", "SECRET_KEY", "API_TOKEN"]
+missing  = [k for k in required if not os.getenv(k)]
+if missing:
+    raise EnvironmentError(f"Missing required env vars: {missing}")
+```
 
-This topic is strongest when combined with:
+### `shutil` — High-Level File Operations
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+`shutil` builds on `os` for common file management tasks:
 
-### 9) Review Questions
+```python
+import shutil
+from pathlib import Path
 
-Use these to self-check understanding:
+# Copy file preserving metadata
+shutil.copy2("src.txt", "dst.txt")
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+# Copy entire directory tree
+shutil.copytree("src_dir", "dst_dir")
 
-### 10) Progress Rubric
+# Move / rename
+shutil.move("old/path.txt", "new/path.txt")
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+# Delete entire directory tree
+shutil.rmtree("temp_dir")
 
-### 11) Suggested Practice Routine
+# Disk usage
+total, used, free = shutil.disk_usage("/")
+print(f"Free: {free // (1024**3)} GiB")
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+# Create a zip archive
+shutil.make_archive("backup", "zip", "project")
+```
 
-### 12) Reference Hygiene
+### `tempfile` — Safe Temporary Files
 
-To keep this document useful over time:
+```python
+import tempfile
+import os
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+# Temporary file — deleted when closed
+with tempfile.NamedTemporaryFile(mode="w", suffix=".csv",
+                                  delete=True, encoding="utf-8") as tf:
+    tf.write("id,name\n1,Ava\n")
+    print(tf.name)  # path available while open
+
+# Temporary directory — cleaned up on exit
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "output.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("temp content")
+```
+
+### Progress Rubric
+
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Read env vars with `os.getenv`, list a directory with `os.listdir`, build paths with `os.path.join` |
+| **Developing** | Walk directory trees, validate required env vars at startup, prefer `pathlib` for new path code |
+| **Proficient** | Use `os.scandir` efficiently, combine `os` and `shutil`, write cross-platform path code |
+| **Advanced** | Manage process metadata, use `tempfile` safely, use `os.replace` for atomic file updates |
+
+### Suggested Practice Projects
+
+1. **File inventory** — Walk a directory tree with `os.walk`, collect file sizes, and print a summary sorted by size.
+2. **Env-var validator** — Write a startup check that reads all required env vars and raises a descriptive error listing every missing one.
+3. **Directory mirror** — Copy a directory structure to a backup location, skipping files that already exist and are unchanged (compare `os.stat().st_mtime`).
+4. **Temp workspace** — Use `tempfile.TemporaryDirectory` as a scratch area; process files inside it, then move the results out before cleanup.
+5. **Cross-platform path tool** — Accept a path string, resolve `~`, ensure it is absolute, create its parent directories, and report whether it is a file or directory.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| String concatenation for paths | `dir + "/" + file` breaks on Windows | Use `os.path.join` or `Path / "subdir"` |
+| `os.environ[key]` on missing key | Raises `KeyError` immediately | Use `os.getenv(key, default)` or `.get` |
+| `os.listdir` returns filenames only | You must `os.path.join` to get full paths | Use `os.scandir` or `Path.iterdir()` |
+| `os.makedirs` fails if dir exists | Raises `FileExistsError` by default | Pass `exist_ok=True` |
+| `os.remove` on a directory | Raises `IsADirectoryError` | Use `os.rmdir` (empty) or `shutil.rmtree` |
+| Platform `os.sep` assumptions | Hardcoding `/` breaks on Windows | Always use `os.path.join` or `pathlib` |
 

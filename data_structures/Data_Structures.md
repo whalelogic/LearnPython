@@ -93,154 +93,170 @@ Those four questions usually point you to the right default.
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Choosing the Right Structure
 
-### 1) Learning Goals
+Answer these four questions before writing a line of code:
 
-By the end of this topic, you should be able to:
+| Question | Points to |
+|---|---|
+| Do I need to look things up by name? | `dict` |
+| Do I need fast membership tests? | `set` |
+| Is the order fixed and data immutable? | `tuple` |
+| Do I need to append, pop, or sort? | `list` |
+| FIFO queue with fast pops from both ends? | `collections.deque` |
+| Priority queue (always get smallest first)? | `heapq` / `queue.PriorityQueue` |
+| Named fields without a full class? | `collections.namedtuple` or `dataclasses.dataclass` |
+| Counting occurrences? | `collections.Counter` |
+| Dict with default values? | `collections.defaultdict` |
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+### Built-in Type Method Reference
 
-### 2) Mental Model
+#### `list` methods
 
-Use this short mental model while reading examples:
+| Method | Description | Example |
+|---|---|---|
+| `.append(x)` | Add one element to the end | `lst.append(5)` |
+| `.extend(iterable)` | Add all elements from iterable | `lst.extend([6, 7])` |
+| `.insert(i, x)` | Insert `x` before position `i` | `lst.insert(0, "first")` |
+| `.remove(x)` | Remove first occurrence of `x` | `lst.remove("a")` |
+| `.pop(i=-1)` | Remove and return element at index | `lst.pop()` / `lst.pop(0)` |
+| `.index(x)` | Position of first `x` | `lst.index("b")` |
+| `.count(x)` | How many times `x` appears | `lst.count(3)` |
+| `.sort(key=, reverse=)` | Sort in place | `lst.sort(key=str.lower)` |
+| `.reverse()` | Reverse in place | `lst.reverse()` |
+| `.copy()` | Shallow copy | `copy = lst.copy()` |
+| `.clear()` | Remove all elements | `lst.clear()` |
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+#### `dict` methods
 
-If you cannot explain all five parts, pause and simplify the example.
+| Method | Description | Example |
+|---|---|---|
+| `.get(key, default)` | Safe lookup, no `KeyError` | `d.get("x", 0)` |
+| `.keys()` / `.values()` / `.items()` | Views for iteration | `for k, v in d.items():` |
+| `.update(other)` | Merge another dict in place | `d.update({"c": 3})` |
+| `.pop(key, default)` | Remove and return value | `d.pop("x", None)` |
+| `.setdefault(key, default)` | Insert default only if key missing | `d.setdefault("count", 0)` |
+| `.copy()` | Shallow copy | `d.copy()` |
 
-### 3) Terminology Drill
+#### `set` methods
 
-Review these terms and define each in your own words:
+| Method | Description | Example |
+|---|---|---|
+| `.add(x)` | Add element | `s.add(7)` |
+| `.discard(x)` | Remove if present; no error if absent | `s.discard(99)` |
+| `.remove(x)` | Remove; raises `KeyError` if absent | `s.remove(3)` |
+| `.union(other)` / `\|` | All elements from both | `s \| t` |
+| `.intersection(other)` / `&` | Elements in both | `s & t` |
+| `.difference(other)` / `-` | Elements in `s` not in `t` | `s - t` |
+| `.issubset(other)` | True if all elements of `s` in `t` | `s <= t` |
+| `.issuperset(other)` | True if `s` contains all of `t` | `s >= t` |
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+### Standard Library Extensions
 
-A useful habit is to write one sentence per term plus one concrete example.
+```python
+from collections import deque, defaultdict, Counter, namedtuple
+import heapq
 
-### 4) Practical Checklist
+# deque — O(1) append and pop from both ends
+q = deque([1, 2, 3])
+q.appendleft(0)    # [0, 1, 2, 3]
+q.popleft()        # 0
 
-When implementing this topic in a project, verify:
+# defaultdict — no KeyError on missing keys
+word_counts = defaultdict(int)
+for word in "the cat sat on the mat".split():
+    word_counts[word] += 1
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+# Counter — counting shortcut
+c = Counter("mississippi")
+print(c.most_common(3))   # [('s', 4), ('i', 4), ('p', 2)]
 
-### 5) Common Mistakes and Corrections
+# namedtuple — lightweight immutable record
+Point = namedtuple("Point", ["x", "y"])
+p = Point(3, 7)
+print(p.x, p.y)
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+# heapq — min-heap
+items = [(3, "normal"), (1, "urgent"), (2, "soon")]
+heapq.heapify(items)
+print(heapq.heappop(items))   # (1, 'urgent')
+```
 
-### 6) Debugging Workflow
+### Time Complexity Reference
 
-Follow this process when something breaks:
+| Operation | `list` | `dict` | `set` | `deque` |
+|---|---|---|---|---|
+| Access by index | O(1) | N/A | N/A | O(n) |
+| Lookup by key/value | O(n) | O(1) avg | O(1) avg | O(n) |
+| Append to end | O(1) amortized | — | — | O(1) |
+| Insert at front | O(n) | — | — | O(1) |
+| Delete by value | O(n) | O(1) avg | O(1) avg | O(n) |
+| Membership test | O(n) | O(1) avg | O(1) avg | O(n) |
+| Sort | O(n log n) | N/A | N/A | N/A |
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+**Key insight:** use a `set` or `dict` whenever you find yourself checking membership repeatedly in a `list`. Converting once is O(n); each lookup then becomes O(1).
 
-### 7) Mini Exercises
+### Comprehension Patterns
 
-Try these short tasks:
+```python
+# List comprehension — transform and filter in one line
+evens_squared = [x**2 for x in range(20) if x % 2 == 0]
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+# Dict comprehension — invert a mapping
+original = {"a": 1, "b": 2, "c": 3}
+inverted = {v: k for k, v in original.items()}
 
-### 8) Integration Notes
+# Set comprehension — unique lowercase words
+text = "The Cat sat on the Mat"
+unique_words = {w.lower() for w in text.split()}
 
-This topic is strongest when combined with:
+# Generator expression — lazy; does not build a list
+total = sum(x**2 for x in range(1_000_000))
+```
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+### Sorting Patterns
 
-### 9) Review Questions
+```python
+students = [("Ana", 92), ("Sam", 85), ("Lee", 98)]
 
-Use these to self-check understanding:
+# Sort by score descending
+by_score = sorted(students, key=lambda pair: pair[1], reverse=True)
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+# Sort by multiple fields
+records = [{"name": "Ben", "age": 30}, {"name": "Ava", "age": 25}]
+by_age_then_name = sorted(records, key=lambda r: (r["age"], r["name"]))
 
-### 10) Progress Rubric
+# Sort in place
+students.sort(key=lambda pair: pair[0])   # alphabetical
+```
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+### Progress Rubric
 
-### 11) Suggested Practice Routine
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Create list/dict/set/tuple literals, access elements, use basic methods |
+| **Developing** | Choose the right structure for a task, use comprehensions, sort with a key |
+| **Proficient** | Use `defaultdict`, `Counter`, `deque`, `heapq`; reason about time complexity |
+| **Advanced** | Design structures that match access patterns, benchmark alternatives, use `namedtuple` and `dataclass` appropriately |
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+### Suggested Practice Projects
 
-### 12) Reference Hygiene
+1. **Word frequency** — Count word occurrences in a block of text using `Counter`, then display the 5 most common.
+2. **Deduplication** — Remove duplicates from a list while preserving order (hint: `dict.fromkeys`).
+3. **Inverted index** — Build a `defaultdict(list)` mapping each word to the list of sentence indices it appears in.
+4. **Priority task queue** — Use `heapq` to process tasks in priority order from a list of `(priority, task_name)` tuples.
+5. **Benchmark** — Measure membership-check time for a `list` vs a `set` at 10k, 100k, and 1M elements.
 
-To keep this document useful over time:
+### Common Gotchas
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Mutable default argument | `def fn(lst=[]):` shares one list across all calls | Use `def fn(lst=None): lst = lst or []` |
+| Shallow copy of nested structures | `lst.copy()` copies the outer list but shares inner lists | Use `copy.deepcopy(lst)` for nested data |
+| `dict` key must be hashable | Lists and dicts cannot be dict keys | Use tuples instead of lists as keys |
+| `list.sort` vs `sorted` | `.sort()` returns `None` and modifies in place | Use `sorted()` when you need a new list |
+| `set` has no order | You cannot rely on iteration order from a `set` | Use `sorted(s)` when order matters |
+| `pop(0)` on a `list` | Removing from the front is O(n) | Use `collections.deque` for FIFO queues |
 

@@ -39,154 +39,197 @@ PyTorch makes it easy to inspect tensors, write custom training loops, and debug
 
 ---
 
-## Extended Study Workbook
+## Deep Reference
 
-This extension turns the page into a longer reference you can repeatedly revisit while practicing.
+### Tensors and Autograd
 
-### 1) Learning Goals
+A `torch.Tensor` is PyTorch's core data type — a typed multi-dimensional array that optionally tracks gradients.
 
-By the end of this topic, you should be able to:
+```python
+import torch
 
-- Explain the core vocabulary in plain language.
-- Identify when this topic is a good fit for a real task.
-- Recognize common beginner mistakes before they happen.
-- Debug basic issues without guessing.
-- Compose this topic with related Python tools and modules.
+# Create tensors
+x = torch.tensor([1.0, 2.0, 3.0])          # from Python list
+z = torch.zeros(3, 4)                        # 3×4 zero matrix
+r = torch.randn(2, 3)                        # standard normal
 
-### 2) Mental Model
+# Gradient tracking
+w = torch.tensor([[1.0, 2.0]], requires_grad=True)
+loss = (w ** 2).sum()
+loss.backward()
+print(w.grad)    # tensor([[2., 4.]])  — d(loss)/dw
 
-Use this short mental model while reading examples:
+# No gradient needed at inference time
+with torch.no_grad():
+    out = w * 3
+```
 
-1. **Input** — What data or request enters the code?
-2. **Transformation** — What operation changes the data?
-3. **Output** — What value, file, response, or effect is produced?
-4. **Failure modes** — What can go wrong?
-5. **Validation** — How do you check correctness quickly?
+### Tensor Operations Quick-Reference
 
-If you cannot explain all five parts, pause and simplify the example.
+| Operation | Syntax | Notes |
+|---|---|---|
+| Shape | `t.shape` / `t.size()` | Returns `torch.Size` |
+| Dtype | `t.dtype` | e.g. `torch.float32` |
+| Device | `t.device` | `cpu` or `cuda:0` |
+| Move to GPU | `t.to("cuda")` | Returns new tensor |
+| Reshape | `t.reshape(2, -1)` | `-1` infers dimension |
+| Flatten | `t.flatten()` | |
+| Transpose | `t.T` / `t.transpose(0, 1)` | |
+| Matrix multiply | `a @ b` / `torch.matmul(a, b)` | |
+| Element-wise multiply | `a * b` | Broadcasts like NumPy |
+| Concatenate | `torch.cat([a, b], dim=0)` | Stack along existing dim |
+| Stack | `torch.stack([a, b], dim=0)` | New dimension |
+| Mean | `t.mean()` / `t.mean(dim=0)` | |
+| Convert to NumPy | `t.detach().cpu().numpy()` | Must detach if `requires_grad` |
+| Convert from NumPy | `torch.from_numpy(arr)` | Shares memory |
 
-### 3) Terminology Drill
+### Building a Model with `nn.Module`
 
-Review these terms and define each in your own words:
+```python
+import torch.nn as nn
+import torch.nn.functional as F
 
-- value
-- expression
-- statement
-- iterable
-- exception
-- state
-- side effect
-- dependency
-- serialization
-- validation
+class MLP(nn.Module):
+    def __init__(self, in_features, hidden, out_features):
+        super().__init__()
+        self.fc1 = nn.Linear(in_features, hidden)
+        self.dropout = nn.Dropout(0.3)
+        self.fc2 = nn.Linear(hidden, out_features)
 
-A useful habit is to write one sentence per term plus one concrete example.
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        return self.fc2(x)
 
-### 4) Practical Checklist
+model = MLP(in_features=20, hidden=64, out_features=1)
+print(model)
+print(sum(p.numel() for p in model.parameters()), "parameters")
+```
 
-When implementing this topic in a project, verify:
+### Layer Types Quick-Reference
 
-- Inputs are validated early.
-- Variable names are explicit.
-- Error handling exists for expected failures.
-- Edge cases are covered.
-- Output format is predictable.
-- The code is readable after one week away.
-- The solution is tested with both normal and strange input.
-- Logging/print statements are meaningful during debugging.
-- Temporary experimentation code is removed before sharing.
-- You documented assumptions.
+| Layer | Purpose |
+|---|---|
+| `nn.Linear(in, out)` | Fully connected |
+| `nn.Conv2d(in_ch, out_ch, kernel)` | 2-D convolution |
+| `nn.MaxPool2d(kernel)` | Spatial downsampling |
+| `nn.LSTM(input_size, hidden, layers)` | Long short-term memory |
+| `nn.GRU(input_size, hidden)` | Gated recurrent unit |
+| `nn.Embedding(vocab, dim)` | Integer tokens → dense vectors |
+| `nn.Dropout(p)` | Zero `p` fraction of activations |
+| `nn.BatchNorm1d(num_features)` | Batch normalization |
+| `nn.LayerNorm(normalized_shape)` | Layer normalization |
+| `nn.Sequential(*layers)` | Simple chain |
 
-### 5) Common Mistakes and Corrections
+### Full Training Loop
 
-- **Mistake:** Copying code without understanding data flow.
-  - **Fix:** Trace one sample input by hand.
-- **Mistake:** Ignoring type/shape/format assumptions.
-  - **Fix:** Print and assert assumptions early.
-- **Mistake:** Overcomplicating the first version.
-  - **Fix:** Build a tiny working baseline first.
-- **Mistake:** Mixing setup and business logic.
-  - **Fix:** Separate configuration from core operations.
-- **Mistake:** Not handling empty input.
-  - **Fix:** Add a guard path and test it.
+```python
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 
-### 6) Debugging Workflow
+# Fake data
+X = torch.randn(1000, 20)
+y = (X[:, 0] > 0).float().unsqueeze(1)
 
-Follow this process when something breaks:
+dataset = TensorDataset(X, y)
+loader  = DataLoader(dataset, batch_size=32, shuffle=True)
 
-1. Reproduce the issue with the smallest possible input.
-2. Confirm what output you expected.
-3. Add narrow debug prints or assertions.
-4. Check boundary values and optional fields.
-5. Verify external dependencies and environment assumptions.
-6. Fix one thing at a time.
-7. Re-run the exact failing scenario.
-8. Keep a short note about root cause.
+model     = MLP(20, 64, 1)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+criterion = nn.BCEWithLogitsLoss()
 
-### 7) Mini Exercises
+for epoch in range(10):
+    model.train()
+    total_loss = 0.0
+    for X_batch, y_batch in loader:
+        optimizer.zero_grad()
+        logits = model(X_batch)
+        loss   = criterion(logits, y_batch)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+    print(f"Epoch {epoch+1:02d}  loss={total_loss/len(loader):.4f}")
 
-Try these short tasks:
+# Evaluation
+model.eval()
+with torch.no_grad():
+    preds = torch.sigmoid(model(X)).squeeze()
+    acc   = ((preds > 0.5) == y.squeeze().bool()).float().mean()
+    print(f"Accuracy: {acc:.3f}")
+```
 
-1. Rewrite one example using clearer variable names.
-2. Add one intentional edge case and handle it gracefully.
-3. Add a small validation function for input checks.
-4. Convert one example into a reusable function.
-5. Produce a tiny test table with three normal cases and three edge cases.
-6. Explain one example to a beginner in five sentences.
-7. Refactor duplicated lines into a helper.
-8. Add a failure path with a clear error message.
-9. Measure behavior with larger input and note observations.
-10. Compare two approaches and justify your final choice.
+### Loss Functions Reference
 
-### 8) Integration Notes
+| Task | Loss | Notes |
+|---|---|---|
+| Binary classification (logits) | `nn.BCEWithLogitsLoss()` | Numerically stable; no sigmoid needed |
+| Multi-class (class indices) | `nn.CrossEntropyLoss()` | Combines `LogSoftmax` + `NLLLoss` |
+| Regression | `nn.MSELoss()` | |
+| Regression (outlier-robust) | `nn.HuberLoss(delta=1.0)` | |
+| Multi-label | `nn.BCEWithLogitsLoss()` | Apply sigmoid per label at inference |
 
-This topic is strongest when combined with:
+### Optimizer Quick-Reference
 
-- Built-in functions for concise transformations.
-- Standard library modules for file handling, paths, parsing, and collections.
-- Data structures that match access patterns.
-- Clear naming and small functions from core Python fundamentals.
-- Lightweight tests to protect behavior while refactoring.
+| Optimizer | Key args | When to use |
+|---|---|---|
+| `torch.optim.Adam` | `lr=1e-3`, `weight_decay=0` | Good default |
+| `torch.optim.AdamW` | `lr=1e-3`, `weight_decay=1e-2` | Adam with proper weight decay (preferred) |
+| `torch.optim.SGD` | `lr=0.01`, `momentum=0.9` | Large-batch training, fine-tuning |
+| `torch.optim.RMSprop` | `lr=1e-3` | Recurrent networks |
 
-### 9) Review Questions
+### Saving and Loading
 
-Use these to self-check understanding:
+```python
+# Save model weights (recommended)
+torch.save(model.state_dict(), "model.pt")
 
-1. What problem does this topic solve best?
-2. Which assumptions does your code make?
-3. What happens with empty or missing values?
-4. How does your solution fail, and is that failure readable?
-5. Can you explain each line to a teammate?
-6. Which part should be extracted into a helper?
-7. What would you monitor in production?
-8. What part of this is easiest to misuse?
-9. Where can performance degrade?
-10. What would you document for future maintainers?
+# Load
+model2 = MLP(20, 64, 1)
+model2.load_state_dict(torch.load("model.pt", weights_only=True))
+model2.eval()
 
-### 10) Progress Rubric
+# Save entire model (fragile across code changes)
+torch.save(model, "full_model.pt")
+```
 
-- **Beginner:** Can run and slightly modify examples.
-- **Developing:** Can implement this topic for a small script from scratch.
-- **Proficient:** Can handle edge cases and debug confidently.
-- **Advanced:** Can design abstractions and teach the topic clearly.
+### Moving to GPU
 
-### 11) Suggested Practice Routine
+```python
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model  = model.to(device)
 
-- Day 1: Read and run all examples.
-- Day 2: Rebuild key examples from memory.
-- Day 3: Add validation and error handling.
-- Day 4: Refactor for readability.
-- Day 5: Write tiny tests and edge cases.
-- Day 6: Integrate with another module in this repository.
-- Day 7: Summarize what you learned in your own notes.
+for X_batch, y_batch in loader:
+    X_batch = X_batch.to(device)
+    y_batch = y_batch.to(device)
+    ...
+```
 
-### 12) Reference Hygiene
+### Progress Rubric
 
-To keep this document useful over time:
+| Level | Demonstrated ability |
+|---|---|
+| **Beginner** | Create tensors, run the training loop skeleton, compute a forward pass |
+| **Developing** | Write an `nn.Module`, use `DataLoader`, evaluate with `torch.no_grad()` |
+| **Proficient** | Track gradients correctly, choose loss/optimizer, save and load checkpoints |
+| **Advanced** | Write custom layers and loss functions, use LR schedulers, profile and optimize memory |
 
-- Keep examples short and executable.
-- Prefer plain language over jargon.
-- Include at least one edge-case example per section.
-- Link to neighboring guides when concepts overlap.
-- Update examples when APIs or conventions change.
+### Suggested Practice Projects
+
+1. **Binary classifier** — Train an MLP on synthetic or tabular data; plot training loss.
+2. **Image classifier** — Build a CNN for MNIST using `Conv2d` and `MaxPool2d`.
+3. **Sequence model** — Use an `LSTM` to predict the next character in a text string.
+4. **Regression** — Predict housing prices with `MSELoss`; compare Adam vs SGD convergence speed.
+5. **Transfer learning** — Load a pretrained `torchvision.models.resnet18`, freeze all layers except the final `fc`, fine-tune on a small image dataset.
+
+### Common Gotchas
+
+| Gotcha | Explanation | Fix |
+|---|---|---|
+| Forgetting `optimizer.zero_grad()` | Gradients accumulate across batches by default | Call `zero_grad()` at the start of each batch |
+| `model.train()` / `model.eval()` | Dropout and BatchNorm behave differently in train vs eval mode | Switch modes explicitly |
+| In-place operations on leaf tensors | `w += 1` on a `requires_grad` tensor raises an error | Use `w = w + 1` |
+| `loss.item()` vs `loss` | Keeping `loss` in a list holds the whole compute graph in memory | Always call `.item()` to extract a plain float |
+| Shape mismatch in loss | `BCEWithLogitsLoss` expects `(N, 1)` target to match `(N, 1)` output | Use `.unsqueeze(1)` on 1-D targets |
+| CPU/GPU tensor mismatch | Adding a CPU tensor to a GPU tensor raises a RuntimeError | Move all tensors to the same device before operations |
 
