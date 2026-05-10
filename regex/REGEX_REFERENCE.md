@@ -25,6 +25,126 @@ Regex answers: **"Where does this pattern occur?"** and **"What subparts can I c
 | `re.split(pattern, text)` | Split text by pattern |
 | `re.compile(pattern, flags=0)` | Precompile pattern object |
 
+### Pattern Syntax Quick-Reference
+
+| Pattern | Meaning | Matches | Does not match |
+|---|---|---|---|
+| `\d` | Digit `[0-9]` | `7`, `0` | `a`, ` ` |
+| `\D` | Non-digit | `a`, `!` | `5` |
+| `\w` | Word char `[a-zA-Z0-9_]` | `name_1` | `-`, ` ` |
+| `\W` | Non-word char | ` `, `-` | `a` |
+| `\s` | Whitespace | space, tab, `\n` | `a` |
+| `\S` | Non-whitespace | `a`, `!` | ` ` |
+| `.` | Any char except `\n` | `a`, `9`, `!` | `\n` |
+| `^` | Start of string (or line with `re.M`) | — | — |
+| `$` | End of string (or line with `re.M`) | — | — |
+| `\b` | Word boundary | Between `\w` and `\W` | — |
+| `[abc]` | Character class | `a`, `b`, `c` | `d` |
+| `[^abc]` | Negated class | anything except `a`, `b`, `c` | — |
+| `[a-z]` | Character range | `a` through `z` | `A`, `1` |
+| `a\|b` | Alternation | `a` or `b` | `c` |
+| `(abc)` | Capturing group | captures `abc` | — |
+| `(?:abc)` | Non-capturing group | groups without capturing | — |
+| `(?P<name>...)` | Named group | captures with name | — |
+| `(?=...)` | Lookahead (positive) | position before match | — |
+| `(?!...)` | Lookahead (negative) | position where not followed by | — |
+| `(?<=...)` | Lookbehind (positive) | position after match | — |
+
+#### Quantifiers
+
+| Quantifier | Meaning | Greedy? |
+|---|---|---|
+| `*` | Zero or more | Yes |
+| `+` | One or more | Yes |
+| `?` | Zero or one (optional) | Yes |
+| `{n}` | Exactly `n` | — |
+| `{n,}` | At least `n` | Yes |
+| `{n,m}` | Between `n` and `m` | Yes |
+| `*?` / `+?` / `??` | Lazy (minimal) versions | No |
+
+### `re` Module Function Reference
+
+| Function | Description | Returns |
+|---|---|---|
+| `re.search(pat, s, flags=0)` | Find first match anywhere in string | `Match` or `None` |
+| `re.match(pat, s, flags=0)` | Match only at the start of string | `Match` or `None` |
+| `re.fullmatch(pat, s, flags=0)` | Entire string must match | `Match` or `None` |
+| `re.findall(pat, s, flags=0)` | All non-overlapping matches | `list[str]` or `list[tuple]` |
+| `re.finditer(pat, s, flags=0)` | Iterator of `Match` objects | iterator |
+| `re.sub(pat, repl, s, count=0)` | Replace matches with `repl` | `str` |
+| `re.subn(pat, repl, s)` | Replace and return count | `(str, int)` |
+| `re.split(pat, s, maxsplit=0)` | Split on pattern | `list[str]` |
+| `re.compile(pat, flags=0)` | Compile for reuse | `re.Pattern` |
+| `re.escape(s)` | Escape all special chars in `s` | `str` |
+
+### `Match` Object Methods
+
+| Method / Attribute | Returns |
+|---|---|
+| `.group(0)` or `.group()` | Entire matched string |
+| `.group(n)` | Content of capturing group `n` |
+| `.group("name")` | Content of named group |
+| `.groups()` | Tuple of all capturing groups |
+| `.groupdict()` | Dict of all named groups |
+| `.start()` / `.end()` | Start / end index in original string |
+| `.span()` | `(start, end)` tuple |
+
+### Flags Reference
+
+| Flag | Shorthand | Effect |
+|---|---|---|
+| `re.IGNORECASE` | `re.I` | Case-insensitive matching |
+| `re.MULTILINE` | `re.M` | `^` and `$` match at each line boundary |
+| `re.DOTALL` | `re.S` | `.` matches `\n` too |
+| `re.VERBOSE` | `re.X` | Allow whitespace and `#` comments in pattern |
+| `re.ASCII` | `re.A` | `\w`, `\d`, etc. match ASCII only |
+
+```python
+# re.VERBOSE — break a complex pattern across lines
+import re
+
+date_pat = re.compile(r"""
+    (?P<year>  \d{4})   # four-digit year
+    [-/]
+    (?P<month> \d{1,2}) # one or two digit month
+    [-/]
+    (?P<day>   \d{1,2}) # one or two digit day
+""", re.VERBOSE)
+
+m = date_pat.fullmatch("2024-07-04")
+print(m.groupdict())  # {'year': '2024', 'month': '07', 'day': '04'}
+```
+
+### Common Real-World Patterns
+
+```python
+import re
+
+# Email (simplified)
+EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+
+# URL
+URL = re.compile(r"https?://[^\s/$.?#].[^\s]*")
+
+# US phone number
+PHONE = re.compile(r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
+
+# IPv4 address
+IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+
+# Username: 3–20 alphanumeric + underscore
+USERNAME = re.compile(r"^[a-z0-9_]{3,20}$", re.I)
+
+# Hashtags
+HASHTAG = re.compile(r"#\w+")
+
+# Strip HTML tags
+HTML_TAG = re.compile(r"<[^>]+>")
+
+# Extract all numbers (int or float)
+NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+```
+
 ## Raw Strings Matter
 
 Always prefer raw strings (`r"..."`) for regex patterns:

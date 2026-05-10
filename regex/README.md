@@ -4,8 +4,9 @@ Regex helps you search, validate, split, and rewrite text using patterns.
 
 ## In This Folder
 
-- [Regex_Reference.md](Regex_Reference.md) — practical introduction and common patterns
-- [reference/README.md](reference/README.md) — deeper regex syntax notes
+`/REGEX_REFERENCE.md` is the main reference for regex syntax and features. The `find_pattern.py` script is a playground for testing regex patterns on sample text.
+
+- [regex/REGEX_REFERENCE.md](/regex/REGEX_REFERENCE.md) — deeper regex syntax notes
 - `find_pattern.py` — a script for experimenting with matches
 
 ## A Beginner-Friendly Mental Model
