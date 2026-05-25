@@ -11,3 +11,6 @@ wheels/
 .ipynb_checkpoints
 # Gemini.md
 GEMINI.md/
+./CHANGES_SUMMARY.md
+CHANGES_SUMMARY.md
+
